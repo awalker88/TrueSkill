@@ -1,20 +1,11 @@
 from Player import Player
 from Game import Game
-from History import History
 import pickle
+from History import History
 
-# h = History()
-#
-# h.add_player("Andrew", 1200)
-# h.add_player("Erin", 1300)
-# h.add_player("Jess", 800)
-# h.add_player("Sierra", 950)
-# h.add_player("Michelle", 2400)
-# h.add_player("Brad", 750)
-# h.add_player("Isabelle", 500)
-#
-# h.print_roster()
-# h.tournament([])
+h = History()
 
-p1 = Player("Andrew Walker", 200)
+h.clear_game_history()
+h.add_game(["Andrew85", "Erin15"], ["Jesse48", "Sierra69"], 21, 19, 1)
 
+h.print_game_history()

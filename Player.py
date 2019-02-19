@@ -6,7 +6,7 @@ from datetime import datetime
 class Player:
 
     def __init__(self, name, skill=0):
-        self.playerID = name.replace(" ", "") + randint(1000, 10000)
+        self.playerID = name.replace(" ", "") + str(randint(10, 100))
         self.name = name
         self.wins = 0
         self.losses = 0
@@ -16,7 +16,7 @@ class Player:
 
     def __str__(self):
         header = "Player Name: " + self.name + "  " + "ID: " + str(self.playerID)
-        return header + "\n" + "Win Rate: " + str(self.get_win_rate()) + "%"
+        return header + "\n" + "Win Rate: " + str(self.get_win_rate()) + "%"  # TODO: add skill
 
     def get_win_rate(self):
         if self.wins + self.losses == 0:
@@ -24,6 +24,6 @@ class Player:
         else:
             return 100*self.wins / (self.wins + self.losses)
 
-    def get_upsets(self, roster):
+    def get_upsets(self, gameHistory):
         # todo: create
         pass
