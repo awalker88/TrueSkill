@@ -1,20 +1,29 @@
 """Contains info about a single player."""
+from random import randint
+from datetime import datetime
+
 
 class Player:
-    def __init__(self, playerID, name):
-        self.playerID = playerID
+
+    def __init__(self, name, skill=0):
+        self.playerID = name.replace(" ", "") + randint(1000, 10000)
         self.name = name
         self.wins = 0
         self.losses = 0
         self.draws = 0
-        self.winRate = self.wins / (self.wins + self.losses)
+        self.skill = skill
+        self.dateCreated = datetime.now()
 
+    def __str__(self):
+        header = "Player Name: " + self.name + "  " + "ID: " + str(self.playerID)
+        return header + "\n" + "Win Rate: " + str(self.get_win_rate()) + "%"
 
-    def print(self):
-        header = "Player Name: " + self.name + "        " + "ID: " + self.playerID
+    def get_win_rate(self):
+        if self.wins + self.losses == 0:
+            return 0.0
+        else:
+            return 100*self.wins / (self.wins + self.losses)
 
-
-
-
-
-
+    def get_upsets(self, roster):
+        # todo: create
+        pass
