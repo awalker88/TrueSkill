@@ -6,7 +6,7 @@ from datetime import datetime
 class Player:
 
     def __init__(self, name, skill=0):
-        self.playerID = name.replace(" ", "") + str(randint(10, 100))
+        self.playerID = name.replace(" ", "") + str(randint(10, 100))  # playerID is their name plus 22 random digits
         self.name = name
         self.wins = 0
         self.losses = 0

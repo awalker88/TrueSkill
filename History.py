@@ -16,11 +16,18 @@ class History:
         self.currentSeason = 1
 
     def add_player(self, name):
+        """ Inputs: Player name as string
+            Outputs: none"""
         newPlayer = Player(name)
         self.roster[newPlayer.playerID] = newPlayer
         pkl.dump(self.roster, open(self.rosterName, "wb"))  # update pickle file after change
 
     def remove_player(self, playerID):
+        """ Inputs: playerID as string
+            Outputs: True if successful, False if player couldn't be found
+
+            Searches roster for player with matching id, then removes them from dictionary and from pkl file
+            """
         if self.roster[playerID] is not None:
             del self.roster[playerID]
             pkl.dump(self.roster, open(self.rosterName, "wb"))  # update pickle file after change
@@ -29,7 +36,11 @@ class History:
         return False
 
     def add_game(self, teamOne, teamTwo, teamOneScore, teamTwoScore, season):
+        """ Inputs: teamOne, teamTwo as lists of playerIDs; teamOneScore, teamTwoScore, season as ints
+            Outputs: none
 
+            Adds game to game history, updates Players to have another win/loss/draw
+            """
         # Game class requires lists of Players, but add_game only requires playerIDs, so we'll need to
         # make new teams composed of Player classes
         pTeamOne = []
@@ -53,6 +64,11 @@ class History:
                 self.roster[playerID].losses += 1
 
     def remove_game(self, gameID):
+        """ Inputs: gameID as string
+            Outputs: True if successful, False if game with gameID could not be found
+
+            Finds game in gameHistory and deletes it, then updates players so they have one less win/loss/draw
+            """
         if self.gameHistory[gameID] is not None:
             teamOne = self.gameHistory[gameID].teamOne
             teamTwo = self.gameHistory[gameID].teamTwo
@@ -76,6 +92,11 @@ class History:
             print(self.roster[playerID], "\n")
 
     def clear_roster(self):
+        """ Inputs: None
+            Outputs: None
+
+            Overwrites roster pkl file and then sets History's roster equal to empty roster pkl file
+            """
         emptyDict = {}
         pkl.dump(emptyDict, open(self.rosterName, "wb"))
         self.roster = pkl.load(open(self.rosterName, "rb"))
@@ -86,6 +107,11 @@ class History:
             print(self.gameHistory[gameID], "\n")
 
     def clear_game_history(self):
+        """ Inputs: None
+            Outputs: None
+
+            Overwrites gameHistory pkl file and then sets History's roster equal to empty roster pkl file
+            """
         emptyDict = {}
         pkl.dump(emptyDict, open(self.gameHistoryName, "wb"))
         self.gameHistory = pkl.load(open(self.gameHistoryName, "rb"))
