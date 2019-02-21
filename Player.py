@@ -5,18 +5,23 @@ from datetime import datetime
 
 class Player:
 
-    def __init__(self, name, skill=0):
-        self.playerID = name.replace(" ", "") + str(randint(10, 100))  # playerID is their name plus 22 random digits
+    def __init__(self, name, playerID="", wins=0, losses=0, draws=0, skill=0):
+        if playerID == "":
+            self.playerID = name.replace(" ", "") + str(randint(10, 100))  # playerID is name plus 2 random digits
+        else:
+            self.playerID = playerID
         self.name = name
-        self.wins = 0
-        self.losses = 0
-        self.draws = 0
+        self.wins = wins
+        self.losses = losses
+        self.draws = draws
         self.skill = skill
         self.dateCreated = datetime.now()
 
     def __str__(self):
         header = "Player Name: " + self.name + "  " + "ID: " + str(self.playerID)
         return header + "\n" + "Win Rate: " + str(self.get_win_rate()) + "%"  # TODO: add skill
+
+        # TODO: add simple version of print
 
     def get_win_rate(self):
         if self.wins + self.losses == 0:

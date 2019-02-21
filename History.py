@@ -1,8 +1,10 @@
 import pickle as pkl
-from random import randint
+from random import randint, shuffle
+from math import ceil, log2
 
 from Player import Player
 from Game import Game
+from TournamentTeam import TournamentTeam
 
 
 class History:
@@ -15,10 +17,10 @@ class History:
         self.gameHistory = pkl.load(open(self.gameHistoryName, "rb"))
         self.currentSeason = 1
 
-    def add_player(self, name):
+    def add_player(self, name, playerID="", wins=0, losses=0, draws=0, skill=0):
         """ Inputs: Player name as string
             Outputs: none"""
-        newPlayer = Player(name)
+        newPlayer = Player(name, playerID, wins, losses, draws, skill)
         self.roster[newPlayer.playerID] = newPlayer
         pkl.dump(self.roster, open(self.rosterName, "wb"))  # update pickle file after change
 
@@ -118,20 +120,107 @@ class History:
         print("Game History cleared.\n")
 
     def tournament(self, teams: list):
-        # sort teams by their average skill
+        """
+        :param teams: list of lists of playerIDs
+        :return: None
+        """
         sortedTeams = []
+        # add skill and TournamentTeams to our list
         for team in teams:
-            teamSkill = 0
-            for player in team:
-                teamSkill += player.skill
-            teamSkill = teamSkill / len(team)
-            sortedTeams.append([teamSkill, team])
+            playerTeam = []  # convert playerIDs into Player objects
+            for playerID in team:
+                playerTeam.append(self.roster[playerID])
+            newTeam = TournamentTeam(playerTeam)
+            sortedTeams.append([newTeam.skill, newTeam])
         sortedTeams.sort()
+        sortedTeams.reverse()
+        # add seed number
+        for seed, team in enumerate(sortedTeams, 1):
+            team.insert(0, seed)
+            team[2].seed = seed
+        # teams are now in format [seedNum, skill, TournamentTeam object]
 
-        # TODO: finish
-        # if there aren't an even number of teams, pick random bye
-        if len(sortedTeams) % 2 != 0:
-            bye = randint(0, len(sortedTeams))
+        # TODO: finish, add functionality to print tournament history
+        gameNumber = 1
+        for rnd in range(ceil(log2(len(sortedTeams)))):
+            print(f"\nROUND: {rnd + 1}")
+            advancers = []  # list of [teamOneSeed, teamOneSkill, TournamentTeam object]s
+
+            # if there aren't an even number of teams, pick random bye from teams that have received fewest num of byes
+            if len(sortedTeams) % 2 != 0:
+                # shuffle teams so if there's a tie on who has the lowest bye, it won't just choose the last team
+                shuffle(sortedTeams)
+                lowestNumByes = 1000
+                bye = 1000
+                for i in range(len(sortedTeams)):
+                    if sortedTeams[i][2].numByes < lowestNumByes:
+                        bye = i  # bye = this teams position in sortedTeams if they have had the lowest byes so far
+                        lowestNumByes = sortedTeams[i][2].numByes
+                byers = sortedTeams.pop(bye)
+                # get names of team that got a bye
+                byersNames = ""
+                for player in byers[2].teamMembers:
+                    byersNames += player.playerID + ", "
+                byersNames = byersNames[:-2]  # drops last comma
+                print(f"\nTeam: {byersNames} will receive a bye this round.")
+                byers[2].numByes += 1
+
+                advancers.append(byers)
+                sortedTeams.sort()
+
+            # create matches for this round
+            gamesLeft = []
+            for i in range(int(len(sortedTeams) / 2)):
+                gamesLeft.append([gameNumber, sortedTeams[i], sortedTeams[len(sortedTeams) - 1 - i]])
+                gameNumber += 1
+                # games now in format [gameNum, [teamOneSeed, teamOneSkill, TournamentTeam object], [teamTwoSeed, ... ]]
+
+            while len(gamesLeft) > 0:
+                # print remaining games
+                print("\nRemaining games in this round:")
+                remainingGameNums = []
+                for game in gamesLeft:
+                    remainingGameNums.append(game[0])
+                    teamOne = game[1][2].name
+                    teamTwo = game[2][2].name
+                    print(f"Game {game[0]}: {teamOne} vs. {teamTwo}")
+
+                # ask what game you'd like to report finished
+                print("Remaining game numbers left:", remainingGameNums,"\n")
+                nextFinished = int(input("What game would you like to report finished?: "))
+                while nextFinished not in remainingGameNums:
+                    print("Invalid game number")
+                    nextFinished = int(input("What game would you like to report finished?: "))
+                gameIndex = 0
+                for game in gamesLeft:
+                    if game[0] == nextFinished:
+                        teamOne = game[1][2]
+                        teamTwo = game[2][2]
+                        teamOneScore = int(input(f"What is the score for {game[1][2].name}?: "))
+                        teamTwoScore = int(input(f"What is the score for {game[2][2].name}?: "))
+                        teamOneIDs = []
+                        for player in teamOne.teamMembers:
+                            teamOneIDs.append(player.playerID)
+                        teamTwoIDs = []
+                        for player in teamTwo.teamMembers:
+                            teamTwoIDs.append(player.playerID)
+
+                        self.add_game(teamOneIDs, teamTwoIDs, teamOneScore, teamTwoScore,
+                                      self.currentSeason)
+                        # TODO: update player skills
+                        if teamOneScore > teamTwoScore:
+                            advancers.append(game[1])  # adds team one to advancers
+                        else:
+                            advancers.append(game[2])  # adds team two to advancers
+                        gamesLeft.pop(gameIndex)
+                    gameIndex += 1
+            sortedTeams = advancers
+
+        print(f"\nThe winner(s) of this tournament are {advancers[0][2].name}. Congratulations!")
+
+
+
+
 
 
 

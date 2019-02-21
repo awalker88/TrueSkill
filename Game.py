@@ -3,12 +3,13 @@ from datetime import datetime
 
 class Game:
 
-    def __init__(self, teamOne: list, teamTwo: list, teamOneScore: int, teamTwoScore: int, season: int):
+    def __init__(self, teamOne: list, teamTwo: list, teamOneScore: int, teamTwoScore: int, season: int, notes: str = ""):
         self.teamOne = teamOne  # teams should be lists of playerIDs
         self.teamTwo = teamTwo
         self.teamOneScore = teamOneScore
         self.teamTwoScore = teamTwoScore
         self.season = season
+        self.notes = notes
         if teamOneScore > teamTwoScore:
             self.winner = teamOne
         elif teamOneScore < teamTwoScore:
@@ -39,9 +40,12 @@ class Game:
 
         time = "Date: " + str(self.date)
 
+        toReturn = names + "\n" + outcome + "\n" + time + "\n"
+        if self.notes != "":
+            toReturn += "Notes:" + self.notes + "\n"
         # TODO: add expected winner to print
 
-        return names + "\n" + outcome + "\n" + time
+        return toReturn
 
     def create_game_id(self):
         """ Creates gameID based on players names, score, and current timestamp """
