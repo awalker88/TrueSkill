@@ -123,6 +123,8 @@ class History:
         """
         :param teams: list of lists of playerIDs
         :return: None
+
+        Runs a single elimination bracket between every team in teams.
         """
         sortedTeams = []
         # add skill and TournamentTeams to our list
@@ -140,7 +142,7 @@ class History:
             team[2].seed = seed
         # teams are now in format [seedNum, skill, TournamentTeam object]
 
-        # TODO: finish, add functionality to print tournament history
+        # TODO: add functionality to print tournament history
         gameNumber = 1
         for rnd in range(ceil(log2(len(sortedTeams)))):
             print(f"\nROUND: {rnd + 1}")
@@ -149,6 +151,7 @@ class History:
             # if there aren't an even number of teams, pick random bye from teams that have received fewest num of byes
             if len(sortedTeams) % 2 != 0:
                 # shuffle teams so if there's a tie on who has the lowest bye, it won't just choose the last team
+                # with lowest number of byes
                 shuffle(sortedTeams)
                 lowestNumByes = 1000
                 bye = 1000

@@ -2,6 +2,7 @@ from Player import Player
 from Game import Game
 import pickle
 from History import History
+import trueskill as ts
 
 h = History()
 h.clear_roster()
@@ -25,8 +26,13 @@ h.add_player("ken", "ken62", skill=550)
 #               ["devin45", "isabelle59"],
 #               ["ruth95", "ken62"]])
 
-h.tournament([["andrew97"], ["erin98"],
-              ["jesse12"], ["sierra14"],
-              ["michelle24"], ["brad41"],
-              ["devin45"], ["isabelle59"],
-              ["ruth95"], ["ken62"]])
+# h.tournament([["andrew97"], ["erin98"],
+#               ["jesse12"], ["sierra14"],
+#               ["michelle24"], ["brad41"],
+#               ["devin45"], ["isabelle59"],
+#               ["ruth95"], ["ken62"]])
+
+ts.DRAW_PROBABILITY = 0.01
+
+alice, bob = ts.Rating(29.167), ts.Rating()
+print(ts.quality_1vs1(alice, bob))

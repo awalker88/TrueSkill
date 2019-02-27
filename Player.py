@@ -21,7 +21,7 @@ class Player:
         header = "Player Name: " + self.name + "  " + "ID: " + str(self.playerID)
         return header + "\n" + "Win Rate: " + str(self.get_win_rate()) + "%"  # TODO: add skill
 
-        # TODO: add simple version of print
+        # TODO: add 'simple' version of print
 
     def get_win_rate(self):
         if self.wins + self.losses == 0:
