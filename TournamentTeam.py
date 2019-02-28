@@ -6,13 +6,13 @@ class TournamentTeam:
         self.teamMembers = teamMembers
         self.name = self.get_name()
         self.seed = 0
-        self.skill = self.get_skill()
+        self.rankingScore = self.get_skill()
         self.numByes = 0
 
     def get_skill(self):
         teamSkill = 0
         for player in self.teamMembers:
-            teamSkill += player.skill
+            teamSkill += player.rankingScore
         return teamSkill / len(self.teamMembers)
 
     def get_name(self):
