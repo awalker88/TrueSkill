@@ -1,6 +1,7 @@
 import pickle as pkl
-from random import randint, shuffle
+from random import shuffle
 from math import ceil, log2
+import trueskill as ts
 
 from Player import Player
 from Game import Game
@@ -17,10 +18,16 @@ class History:
         self.gameHistory = pkl.load(open(self.gameHistoryName, "rb"))
         self.currentSeason = 1
 
-    def add_player(self, name, playerID="", wins=0, losses=0, draws=0, skill=0):
+        MU = 1000.
+        SIGMA = MU / 3
+        BETA = SIGMA / 2
+        TAU = SIGMA / 100
+        self.env = ts.TrueSkill(mu=MU, sigma=SIGMA, beta=BETA, tau=TAU, draw_probability=0)
+
+    def add_player(self, name, playerID="", wins=0, losses=0, draws=0):
         """ Inputs: Player name as string
             Outputs: none"""
-        newPlayer = Player(name, playerID, wins, losses, draws, skill)
+        newPlayer = Player(name, self.env.create_rating(), playerID, wins, losses, draws)
         self.roster[newPlayer.playerID] = newPlayer
         pkl.dump(self.roster, open(self.rosterName, "wb"))  # update pickle file after change
 
@@ -70,6 +77,7 @@ class History:
             Outputs: True if successful, False if game with gameID could not be found
 
             Finds game in gameHistory and deletes it, then updates players so they have one less win/loss/draw
+            IMPORTANT NOTE: This will not revert changes to players' skills or rating scores
             """
         if self.gameHistory[gameID] is not None:
             teamOne = self.gameHistory[gameID].teamOne
@@ -133,7 +141,7 @@ class History:
             for playerID in team:
                 playerTeam.append(self.roster[playerID])
             newTeam = TournamentTeam(playerTeam)
-            sortedTeams.append([newTeam.skill, newTeam])
+            sortedTeams.append([newTeam.rankingScore, newTeam])
         sortedTeams.sort()
         sortedTeams.reverse()
         # add seed number

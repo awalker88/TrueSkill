@@ -43,13 +43,11 @@ class Game:
 
         time = "Date: " + str(self.date)
 
-        winProb = f"Team one win prob: {self.t1WinProb * 100"
+        winProb = f"Team one win prob: {self.t1WinProb}"
 
-        toReturn = names + "\n" + outcome + "\n" + time + "\n"
+        toReturn = names + "\n" + outcome + "\n" + time + "\n" + winProb + "\n"
         if self.notes != "":
             toReturn += "Notes:" + self.notes + "\n"
-
-
 
         return toReturn
 
@@ -67,8 +65,8 @@ class Game:
         return gameDetails + timeDetails
 
     def win_probability_team_one(self):
-        delta_mu = sum(r.mu for r in self.teamOne) - sum(r.mu for r in self.teamTwo)
-        sum_sigma = sum(r.sigma ** 2 for r in itertools.chain(self.teamOne, self.teamTwo))
+        delta_mu = sum(r.skill.mu for r in self.teamOne) - sum(r.skill.mu for r in self.teamTwo)
+        sum_sigma = sum(r.skill.sigma ** 2 for r in itertools.chain(self.teamOne, self.teamTwo))
         size = len(self.teamOne) + len(self.teamTwo)
         denom = math.sqrt(size * (ts.BETA * ts.BETA) + sum_sigma)
         env = ts.global_env()

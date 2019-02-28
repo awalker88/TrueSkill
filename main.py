@@ -1,38 +1,36 @@
-from Player import Player
-from Game import Game
-import pickle
 from History import History
 import trueskill as ts
+from trueskill import BETA, rate
+from Game import Game
 
 h = History()
 h.clear_roster()
 
-# TODO: add players to player roster
-h.add_player("andrew", "andrew97", skill=100)
-h.add_player("erin", "erin98", skill=150)
-h.add_player("jesse", "jesse12", skill=200)
-h.add_player("sierra", "sierra14", skill=250)
-h.add_player("michelle", "michelle24", skill=300)
-h.add_player("brad", "brad41", skill=350)
-h.add_player("devin", "devin45", skill=400)
-h.add_player("isabelle", "isabelle59", skill=450)
-h.add_player("ruth", "ruth95", skill=500)
-h.add_player("ken", "ken62", skill=550)
+h.add_player("andrew", playerID="andrew97")
+h.add_player("erin", playerID="erin98")
+h.add_player("jesse", playerID="jesse12")
+h.add_player("sierra", playerID="sierra14")
+h.add_player("michelle", playerID="michelle24")
+h.add_player("brad", playerID="brad41")
+h.add_player("devin", playerID="devin45")
+h.add_player("isabelle", playerID="isabelle59")
+h.add_player("ruth", playerID="ruth95")
+h.add_player("ken", playerID="ken62")
 
+p1 = h.roster["andrew97"]
+p2 = h.roster["erin98"]
+p3 = h.roster["jesse12"]
+p4 = h.roster["sierra14"]
 
-# h.tournament([["andrew97", "erin98"],
-#               ["jesse12", "sierra14"],
-#               ["michelle24", "brad41"],
-#               ["devin45", "isabelle59"],
-#               ["ruth95", "ken62"]])
+g = Game([p1], [p2], 21, 19, 1)
+print(p1)
 
-# h.tournament([["andrew97"], ["erin98"],
-#               ["jesse12"], ["sierra14"],
-#               ["michelle24"], ["brad41"],
-#               ["devin45"], ["isabelle59"],
-#               ["ruth95"], ["ken62"]])
+# rating_groups = [{p1: p1.skill}, {p2: p2.skill}]
+#
+# for i in range(1):
+#     rating_groups = rate(rating_groups, ranks=[0, 1])
+#
+# for team in rating_groups:
+#     for player in team:
+#         player.skill = team[player]
 
-ts.DRAW_PROBABILITY = 0.01
-
-alice, bob = ts.Rating(29.167), ts.Rating()
-print(ts.quality_1vs1(alice, bob))
