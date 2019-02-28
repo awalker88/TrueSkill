@@ -61,7 +61,7 @@ class History:
 
         newGame = Game(pTeamOne, pTeamTwo, teamOneScore, teamTwoScore, season)
         self.gameHistory[newGame.gameID] = newGame
-        pkl.dump(self.gameHistory, open(self.gameHistoryName, "wb"))  # update pickle file after change
+        pkl.dump(self.gameHistory, open(self.gameHistoryName, "wb"))  # update gameHistory pickle file after change
 
         # update player wins/losses/draws
         for playerID in teamOne + teamTwo:
@@ -71,6 +71,28 @@ class History:
                 self.roster[playerID].wins += 1
             else:
                 self.roster[playerID].losses += 1
+
+        # create rating groups (ts.rate() function takes in lists of dictionaries)
+        rating_groups = []
+        teamOneSkillDict = {}
+        for player in pTeamOne:
+            teamOneSkillDict[player] = player.skill
+        teamTwoSkillDict = {}
+        for player in pTeamTwo:
+            teamTwoSkillDict[player] = player.skill
+        rating_groups.append(teamOneSkillDict)
+        rating_groups.append(teamTwoSkillDict)
+
+        # update skills for players
+        if newGame.winner == teamOne:
+            rating_groups = ts.rate(rating_groups, [1, 0])
+        else:
+            rating_groups = ts.rate(rating_groups, [0, 1])
+        for team in rating_groups:
+            for player in team:
+                player.update_skill(team[player])
+
+
 
     def remove_game(self, gameID):
         """ Inputs: gameID as string
@@ -218,7 +240,6 @@ class History:
 
                         self.add_game(teamOneIDs, teamTwoIDs, teamOneScore, teamTwoScore,
                                       self.currentSeason)
-                        # TODO: update player skills
                         if teamOneScore > teamTwoScore:
                             advancers.append(game[1])  # adds team one to advancers
                         else:

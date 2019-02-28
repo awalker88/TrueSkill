@@ -34,6 +34,10 @@ class Player:
         else:
             return str(100*self.wins / (self.wins + self.losses)) + "%"
 
+    def update_skill(self, newSkill: Rating):
+        self.skill = Rating(newSkill)
+        self.rankingScore = round(self.skill.mu - (3 * self.skill.sigma), 2)
+
     def get_upsets(self, gameHistory):
         # todo: create
         pass
