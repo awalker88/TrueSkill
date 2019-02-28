@@ -1,4 +1,7 @@
 from datetime import datetime
+import itertools
+import math
+import trueskill as ts
 
 
 class Game:
@@ -18,7 +21,7 @@ class Game:
             self.winner = None
         self.date = datetime.now()
         self.gameID = self.create_game_id()
-        # TODO: add skills, chance team one wins
+        self.t1WinProb = self.win_probability_team_one() * 100
 
     def __str__(self):
         names = ""
@@ -40,10 +43,13 @@ class Game:
 
         time = "Date: " + str(self.date)
 
+        winProb = f"Team one win prob: {self.t1WinProb * 100"
+
         toReturn = names + "\n" + outcome + "\n" + time + "\n"
         if self.notes != "":
             toReturn += "Notes:" + self.notes + "\n"
-        # TODO: add expected winner to print
+
+
 
         return toReturn
 
@@ -58,12 +64,15 @@ class Game:
             gameDetails += player.name[0].lower()
         gameDetails += str(self.teamTwoScore)
         timeDetails = now.strftime("%Y%m%d%H%M")
-
         return gameDetails + timeDetails
 
-    def calculate_team_one_odds(self):
-        # todo: create
-        pass
+    def win_probability_team_one(self):
+        delta_mu = sum(r.mu for r in self.teamOne) - sum(r.mu for r in self.teamTwo)
+        sum_sigma = sum(r.sigma ** 2 for r in itertools.chain(self.teamOne, self.teamTwo))
+        size = len(self.teamOne) + len(self.teamTwo)
+        denom = math.sqrt(size * (ts.BETA * ts.BETA) + sum_sigma)
+        env = ts.global_env()
+        return round(env.cdf(delta_mu / denom), 4)
 
 
 
