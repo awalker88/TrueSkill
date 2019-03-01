@@ -21,7 +21,7 @@ class Game:
             self.winner = None
         self.date = datetime.now()
         self.gameID = self.create_game_id()
-        self.t1WinProb = self.win_probability_team_one() * 100
+        self.t1WinProb = round(self.win_probability_team_one() * 100, 2)
 
     def __str__(self):
         names = ""
@@ -71,6 +71,13 @@ class Game:
         denom = math.sqrt(size * (ts.BETA * ts.BETA) + sum_sigma)
         env = ts.global_env()
         return round(env.cdf(delta_mu / denom), 4)
+
+    def get_team_name(self, team):
+        name = ""
+        for player in team:
+            name += player.playerID + ", "
+        name = name[:-2]  # drops last comma
+        return name
 
 
 
