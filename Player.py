@@ -34,7 +34,7 @@ class Player:
         if self.wins + self.losses == 0:
             return "No games played"
         else:
-            return str(100*self.wins / (self.wins + self.losses)) + "%"
+            return str(round(100*self.wins / (self.wins + self.losses), 2)) + "%"
 
     def update_skill(self, newSkill: Rating):
         self.muHistory.append(self.skill.mu)
