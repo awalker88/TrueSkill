@@ -12,8 +12,8 @@ def main():
     roster_list = [['Player ID', 'Name', 'Win Rate', 'Skill Mean', 'Skill Variance', 'Ranking Score', 'Games Played']]
     for key in roster:
         p = roster[key]
-        roster_list.append([key, p.name, p.get_win_rate(), round(p.skill.mu, 2), round(p.skill.sigma, 2), p.rankingScore,
-                            p.wins + p.losses + p.draws])
+        roster_list.append([key, p.name, p.get_win_rate(), round(p.skill.mu, 2), round(p.skill.sigma, 2),
+                            p.rankingScore, p.wins + p.losses + p.draws])
     roster_np = np.array(roster_list)
 
     # connect to google sheets
@@ -21,7 +21,7 @@ def main():
 
     # read new responses
     if 'previous_form_response.pkl' not in os.getcwd():
-        pass
+        pkl.dump([])
 
     # update player list
     update_player_list(roster_np, wkbk)
