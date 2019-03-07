@@ -25,10 +25,11 @@ class History:
         TAU = SIGMA / 100
         self.env = ts.TrueSkill(mu=MU, sigma=SIGMA, beta=BETA, tau=TAU, draw_probability=0.02)
 
-    def add_player(self, name, playerID="", wins=0, losses=0, draws=0):
+    def add_player(self, name, playerID="", wins=0, losses=0, draws=0, skill=0):
         """ Inputs: Player name as string
             Outputs: none"""
-        newPlayer = Player(name, self.env.create_rating(), playerID, wins, losses, draws)
+        skill = self.env.create_rating()
+        newPlayer = Player(name, skill, playerID, wins, losses, draws)
         self.roster[newPlayer.playerID] = newPlayer
         pkl.dump(self.roster, open(self.rosterName, "wb"))  # update pickle file after change
 
@@ -191,8 +192,7 @@ class History:
                 playerTeam.append(self.roster[playerID])
             newTeam = TournamentTeam(playerTeam)
             sortedTeams.append([newTeam.rankingScore, newTeam])
-        sortedTeams.sort()
-        sortedTeams.reverse()
+        sortedTeams.sort(reverse=True)
         # add seed number
         table = PrettyTable()
         table.field_names = ["Seed", "Player ID(s)", "Ranking Score"]
@@ -203,33 +203,26 @@ class History:
         print(table)
         # teams are now in format [seedNum, skill, TournamentTeam object]
 
-        # TODO: add functionality to print tournament history
         gameNumber = 1
         for rnd in range(ceil(log2(len(sortedTeams)))):
             print(f"\nROUND: {rnd + 1}")
-            advancers = []  # list of [teamOneSeed, teamOneSkill, TournamentTeam object]s
+            advancers = []  # list of lists of advancing teams in form: [teamSeed, teamSkill, TournamentTeam object]
 
             # if there aren't an even number of teams, pick random bye from teams that have received fewest num of byes
             if len(sortedTeams) % 2 != 0:
-                # shuffle teams so if there's a tie on who has the lowest bye, it won't just choose the last team
-                # with lowest number of byes
-                shuffle(sortedTeams)
-                lowestNumByes = 1000
-                bye = 1000
+                shuffle(sortedTeams)  # shuffle teams so if tie, it won't just choose the last team with fewest byes
+                lowestNumByes, bye = 1000, 1000
                 for i in range(len(sortedTeams)):
                     if sortedTeams[i][2].numByes < lowestNumByes:
-                        bye = i  # bye = this teams position in sortedTeams if they have had the lowest byes so far
+                        bye = i  # bye is this teams position in sortedTeams if they have had the lowest byes so far
                         lowestNumByes = sortedTeams[i][2].numByes
-                byers = sortedTeams.pop(bye)
+                byersThisRnd = sortedTeams.pop(bye)
                 # get names of team that got a bye
-                byersNames = ""
-                for player in byers[2].teamMembers:
-                    byersNames += player.playerID + ", "
-                byersNames = byersNames[:-2]  # drops last comma
+                byersNames = byersThisRnd[2].get_name()
                 print(f"\nTeam: {byersNames} will receive a bye this round.")
-                byers[2].numByes += 1
+                byersThisRnd[2].numByes += 1
 
-                advancers.append(byers)
+                advancers.append(byersThisRnd)
                 sortedTeams.sort()
 
             # create matches for this round
@@ -249,12 +242,15 @@ class History:
                     teamTwo = game[2][2].name
                     print(f"Game {game[0]}: {teamOne} vs. {teamTwo}")
 
-                # ask what game you'd like to report finished
-                print("Remaining game numbers left:", remainingGameNums, "\n")
-                nextFinished = int(input("What game would you like to report finished?: "))
-                while nextFinished not in remainingGameNums:
-                    print("Invalid game number")
-                    nextFinished = int(input("What game would you like to report finished?: "))
+                print(f"Remaining game numbers left: {remainingGameNums}\n")
+                while True:
+                    try:
+                        nextFinished = int(input("What game would you like to report finished?: "))
+                        remainingGameNums.index(nextFinished)
+                        break
+                    except Exception:
+                        print("Invalid game number")
+
                 gameIndex = 0
                 for game in gamesLeft:
                     if game[0] == nextFinished:
@@ -263,6 +259,7 @@ class History:
                         teamOneScore = int(input(f"What is the score for {game[1][2].name}?: "))
                         teamTwoScore = int(input(f"What is the score for {game[2][2].name}?: "))
                         teamOneIDs = []
+                        # get player id's to pass to self.add_game()
                         for player in teamOne.teamMembers:
                             teamOneIDs.append(player.playerID)
                         teamTwoIDs = []
@@ -271,9 +268,9 @@ class History:
 
                         self.add_game(teamOneIDs, teamTwoIDs, teamOneScore, teamTwoScore)
                         if teamOneScore > teamTwoScore:
-                            advancers.append(game[1])  # adds team one to advancers
+                            advancers.append(game[1])
                         else:
-                            advancers.append(game[2])  # adds team two to advancers
+                            advancers.append(game[2])
                         gamesLeft.pop(gameIndex)
                     gameIndex += 1
             sortedTeams = advancers
