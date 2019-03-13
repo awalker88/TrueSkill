@@ -9,6 +9,7 @@ if fresh:
     h.add_player("andrew", playerID="andrew01")
     h.add_player("erin", playerID="erin01")
     h.add_player("jesse", playerID="jesse01")
+    h.add_player("sierra", playerID="sierra01")
     h.add_player("bob", playerID="bob01")
     h.add_player("alice", playerID="alice01")
     h.add_player("john", playerID="john01")
@@ -40,6 +41,7 @@ if fresh:
         h.add_game([p1], [p2], t1s, t2s)
     h.print_game_history()
     h.print_roster()
+    print(h.roster['andrew01'].skill_history)
 
 tournament = False
 if tournament:
@@ -60,6 +62,3 @@ if tournament:
                   ["annie01"],
                   ["ken01"],
                   ["pierce01"]])
-
-
-
