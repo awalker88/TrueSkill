@@ -1,6 +1,7 @@
 from History import History
 from random import randint
 h = History()
+import pickle as pkl
 
 fresh = True
 if fresh:
@@ -41,7 +42,21 @@ if fresh:
         h.add_game([p1], [p2], t1s, t2s)
     h.print_game_history()
     h.print_roster()
+
+    h.roster['andrew01'].skill_history['2019-03-11'] = 300
+    h.roster['andrew01'].skill_history['2019-03-12'] = 400
+    h.roster['andrew01'].skill_history['2019-03-13'] = 600
     print(h.roster['andrew01'].skill_history)
+
+    h.roster['erin01'].skill_history['2019-03-11'] = 200
+    h.roster['erin01'].skill_history['2019-03-12'] = 500
+    h.roster['erin01'].skill_history['2019-03-13'] = 900
+
+    h.roster['abed01'].skill_history['2019-03-11'] = 700
+    h.roster['abed01'].skill_history['2019-03-13'] = 750
+
+    pkl.dump(h.roster, open(h.roster_name, "wb"))
+
 
 tournament = False
 if tournament:

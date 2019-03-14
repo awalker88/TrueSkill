@@ -21,7 +21,8 @@ class Player:
         self.mu_history = []
         self.sigma_history = []
         dt = datetime.now()
-        self.skill_history = {f'{dt.year}-{dt.month}-{dt.day}': self.ranking_score}
+        formatted_month = '%02d' % dt.month
+        self.skill_history = {f'{dt.year}-{formatted_month}-{dt.day}': self.ranking_score}
 
     def __str__(self):
         header = "Player Name: " + self.name + "  " + "ID: " + str(self.playerID)
@@ -44,7 +45,8 @@ class Player:
         self.skill = Rating(new_skill)
         self.ranking_score = round(self.skill.mu - (3 * self.skill.sigma), 2)
         dt = datetime.now()
-        self.skill_history[f'{dt.year}-{dt.month}-{dt.day}'] = self.ranking_score
+        formatted_month = '%02d' % dt.month
+        self.skill_history[f'{dt.year}-{formatted_month}-{dt.day}'] = self.ranking_score
 
     def get_upsets(self, game_history):
         # todo: create

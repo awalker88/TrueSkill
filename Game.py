@@ -64,7 +64,7 @@ class Game:
         for player in self.team_two:
             game_details += player.name[0].lower()
         game_details += str(self.team_two_score)
-        time_details = now.strftime("%Y%m%d%h%M")
+        time_details = now.strftime("%Y%m%d%H%M%S")
         return game_details + time_details
 
     def win_probability_team_one(self):

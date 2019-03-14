@@ -27,6 +27,9 @@ class History:
         TAU = SIGMA / 100
         self.env = ts.TrueSkill(mu=MU, sigma=SIGMA, beta=BETA, tau=TAU, draw_probability=0.02)
 
+        if len(self.roster) > 90:
+            print("Warning! The google sheet might only be configured to have less than 100 players. Pls fix.")
+
     def add_player(self, name, playerID="", wins=0, losses=0, draws=0, skill=0):
         """ Inputs: Player name as string
             Outputs: none"""
