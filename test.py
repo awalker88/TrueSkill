@@ -14,10 +14,6 @@ if fresh:
     h.add_player("bob", playerID="bob01")
     h.add_player("alice", playerID="alice01")
     h.add_player("john", playerID="john01")
-    h.add_player("ken", playerID="ken01")
-    h.add_player("walt", playerID="walt01")
-    h.add_player("holly", playerID="holly01")
-    h.add_player("marie", playerID="marie01")
     h.add_player("dean", playerID="dean01")
     h.add_player("jeff", playerID="jeff01")
     h.add_player("abed", playerID="abed01")
@@ -33,8 +29,8 @@ if fresh:
         i += 1
     h.suppress = True
     for j in range(100):
-        p1 = r[randint(1, 18)]
-        p2 = r[randint(1, 18)]
+        p1 = r[randint(1, 15)]
+        p2 = r[randint(1, 15)]
         t1s = randint(1, 22)
         t2s = randint(1, 22)
         while t1s == t2s:
