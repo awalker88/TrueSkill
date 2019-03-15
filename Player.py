@@ -6,9 +6,9 @@ from trueskill import Rating
 
 class Player:
 
-    def __init__(self, name, skill, playerID="", wins=0, losses=0, draws=0):
+    def __init__(self, name, skill, player_counter, playerID="", wins=0, losses=0, draws=0):
         if playerID == "":
-            self.playerID = name.replace(" ", "") + str(randint(10, 100))  # playerID is name plus 2 random digits
+            self.playerID = name.replace(" ", "") + str(player_counter)  # playerID is name plus 2 random digits
         else:
             self.playerID = playerID
         self.name = name

@@ -27,6 +27,7 @@ class History:
         TAU = SIGMA / 100
         self.env = ts.TrueSkill(mu=MU, sigma=SIGMA, beta=BETA, tau=TAU, draw_probability=0.02)
 
+        # TODO:
         if len(self.roster) > 90:
             print("Warning! The google sheet might only be configured to have less than 100 players. Pls fix.")
 
@@ -35,9 +36,10 @@ class History:
             Outputs: none"""
         # TODO: change so this handles creating playerID in a way that prevents playerID duplicates
         skill = self.env.create_rating()
-        new_player = Player(name, skill, playerID, wins, losses, draws)
+        new_player = Player(name, skill, self.num_players + 1, playerID, wins, losses, draws)
         self.roster[new_player.playerID] = new_player
         pkl.dump(self.roster, open(self.roster_name, "wb"))  # update pickle file after change
+        print(f'New player added: {new_player.name} ({new_player.playerID})')
 
     def remove_player(self, playerID):
         """ Inputs: playerID as string
@@ -280,3 +282,13 @@ class History:
 
         print(f"\nThe winner(s) of this tournament are {advancers[0][2].name}. Congratulations!")
         print("--------------------TOURNAMENT END--------------------")
+
+
+
+def vs_sucks(everyone_knows):
+    """
+
+    :param everyone_knows:
+    :return:
+    """
+    pass

@@ -25,6 +25,7 @@ class Game:
             self.timestamp = timestamp
         self.gameID = self.create_game_id()
         self.t1_win_prob = round(self.win_probability_team_one() * 100, 2)
+        self.t2_win_prob = 100 - self.t1_win_prob
 
     def __str__(self):
         names = ""
