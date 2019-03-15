@@ -15,6 +15,7 @@ class Player:
         self.wins = wins
         self.losses = losses
         self.draws = draws
+        self.games_played = self.wins + self.losses + self.draws
         self.skill = Rating(skill)
         self.ranking_score = round(self.skill.mu - (3 * self.skill.sigma), 2)
         self.timestamp = datetime.now()
@@ -23,6 +24,20 @@ class Player:
         dt = datetime.now()
         formatted_month = '%02d' % dt.month
         self.skill_history = {f'{dt.year}-{formatted_month}-{dt.day}': self.ranking_score}
+        self.current_winning_streak = 0
+        self.current_losing_streak = 0
+        self.longest_winning_streak = 0
+        self.longest_losing_streak = 0
+        self.points_scored = 0
+        self.points_lost = 0
+        if self.games_played == 0:
+            self.average_ppg = 0
+        else:
+            self.average_ppg = round(self.points_scored / self.games_played, 2)
+        if self.games_played == 0:
+            self.average_point_margin = 0
+        else:
+            self.average_point_margin = round((self.points_scored - self.points_lost) / self.games_played, 2)
 
     def __str__(self):
         header = "Player Name: " + self.name + "  " + "ID: " + str(self.playerID)
@@ -30,8 +45,6 @@ class Player:
             f"\nWin Rate: {self.get_win_rate()} " \
             f"\nSkill Mean: {round(self.skill.mu, 2)} Skill Variance: {round(self.skill.sigma, 2)}" \
             f"\nRanking Score: {self.ranking_score}\n"
-
-        # TODO: add 'simple' version of print
 
     def get_win_rate(self):
         if self.wins + self.losses == 0:
@@ -48,16 +61,23 @@ class Player:
         formatted_month = '%02d' % dt.month
         self.skill_history[f'{dt.year}-{formatted_month}-{dt.day}'] = self.ranking_score
 
-    def get_upsets(self, game_history):
-        # todo: create
-        for game in game_history:
-            which_team = None
-            if self in game_history[game].team_one:
-                which_team = 1
-            elif self in game_history[game].team_two:
-                which_team = 2
-            print(which_team)
-
-        # thoughts: where is the playerIDs stored in game history, how to recognize whether member in game
-        # need to determine what team they were in to get predicted winner (right now stored as string)
-        # print top 5? all? ranked by biggest upset? only victories? Top 3 upsets
+    def update_after_game(self, players_score, opponents_score):
+        self.games_played += 1
+        self.points_scored += players_score
+        self.points_lost += opponents_score
+        self.average_ppg = round(self.points_scored / self.games_played, 2)
+        self.average_point_margin = round((self.points_scored - self.points_lost) / self.games_played, 2)
+        if players_score > opponents_score:
+            self.wins += 1
+            self.current_losing_streak = 0
+            self.current_winning_streak += 1
+            if self.current_winning_streak > self.longest_winning_streak:
+                self.longest_winning_streak = self.current_winning_streak
+        elif players_score < opponents_score:
+            self.losses += 1
+            self.current_winning_streak = 0
+            self.current_losing_streak += 1
+            if self.current_losing_streak > self.longest_losing_streak:
+                self.longest_losing_streak = self.current_losing_streak
+        else:
+            self.draws += 1

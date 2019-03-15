@@ -19,7 +19,7 @@ class History:
         self.num_players = len(self.roster)
         self.num_games = len(self.game_history)
         self.current_season = 1  # TODO: Add support for soft reset of ranks with seasons
-        self.suppress = False
+        self.suppress_messages = False
 
         MU = 1000.
         SIGMA = MU / 3
@@ -30,7 +30,7 @@ class History:
         if len(self.roster) > 90:
             print("Warning! The google sheet might only be configured to have less than 100 players. Pls fix.")
 
-    def add_player(self, name, playerID="", wins=0, losses=0, draws=0, skill=0):
+    def add_player(self, name, playerID="", wins=0, losses=0, draws=0):
         """ Inputs: Player name as string
             Outputs: none"""
         # TODO: change so this handles creating playerID in a way that prevents playerID duplicates
@@ -73,13 +73,10 @@ class History:
         pkl.dump(self.game_history, open(self.game_history_name, "wb"))  # update game_history pickle file after change
 
         # update player wins/losses/draws
-        for player in p_team_one + p_team_two:
-            if new_game.winner is None:
-                self.roster[player.playerID].draws += 1
-            elif player in new_game.winner:
-                self.roster[player.playerID].wins += 1
-            else:
-                self.roster[player.playerID].losses += 1
+        for playerID in team_one:
+            self.roster[playerID].update_after_game(team_one_score, team_two_score)
+        for playerID in team_two:
+            self.roster[playerID].update_after_game(team_two_score, team_one_score)
 
         # create rating groups (ts.rate() function takes in lists of dictionaries)
         rating_groups = []
@@ -103,7 +100,7 @@ class History:
 
         pkl.dump(self.roster, open(self.roster_name, "wb"))  # update roster pickle file after updating player skills
 
-        if not self.suppress:
+        if not self.suppress_messages:
             print(f"Game with ID '{new_game.gameID}' added.")
 
     def remove_game(self, gameID):
@@ -138,7 +135,7 @@ class History:
         for playerID in self.roster:
             p = self.roster[playerID]
             table.add_row([p.playerID, p.name, p.get_win_rate(), round(p.skill.mu, 2), round(p.skill.sigma, 2),
-                           round(p.ranking_score, 2), p.wins + p.losses + p.draws])
+                           round(p.ranking_score, 2), p.games_played])
         print(table)
 
     def clear_roster(self):
@@ -173,11 +170,10 @@ class History:
         print(table)
 
     def clear_game_history(self):
-        """ Inputs: None
-            Outputs: None
-
-            Overwrites game_history pkl file and then sets History's roster equal to empty roster pkl file
-            """
+        """
+        Overwrites game_history pkl file and then sets History's roster equal to empty roster pkl file
+        :return: None
+        """
         empty_dict = {}
         pkl.dump(empty_dict, open(self.game_history_name, "wb"))
         self.game_history = pkl.load(open(self.game_history_name, "rb"))
