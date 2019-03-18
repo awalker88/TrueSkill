@@ -28,18 +28,17 @@ class History:
         TAU = SIGMA / 100
         self.env = ts.TrueSkill(mu=MU, sigma=SIGMA, beta=BETA, tau=TAU, draw_probability=0.02)
 
-        # TODO:
         if len(self.roster) > 90:
             print("Warning! The google sheet might only be configured to have less than 100 players. Pls fix.")
 
     def add_player(self, name, playerID="", wins=0, losses=0, draws=0):
         """
-        :param name:
-        :param playerID:
-        :param wins:
-        :param losses:
-        :param draws:
-        :return:
+        :param name: string of first and last name
+        :param playerID: can be manually set, otherwise created in Player class
+        :param wins: can be manually set, otherwise created in Player class
+        :param losses: can be manually set, otherwise created in Player class
+        :param draws: can be manually set, otherwise created in Player class
+        :return: None
         """
         skill = self.env.create_rating()
         new_player = Player(name, skill, self.num_players + 1, playerID, wins, losses, draws)
@@ -49,11 +48,11 @@ class History:
         print(f'New player added: {new_player.name} ({new_player.playerID})')
 
     def remove_player(self, playerID):
-        """ Inputs: playerID as string
-            Outputs: True if successful, False if player couldn't be found
-
-            Searches roster for player with matching id, then removes them from dictionary and from pkl file
-            """
+        """
+        Searches roster for player with matching id, then removes them from dictionary and from pkl file
+        :param playerID: string
+        :return: True if successful, False otherwise
+        """
         if self.roster[playerID] is not None:
             del self.roster[playerID]
             self.num_players = len(self.roster)
@@ -63,12 +62,16 @@ class History:
         print("Could not find player with ID:", playerID)
         return False
 
-    def add_game(self, team_one, team_two, team_one_score, team_two_score, timestamp=None, notes=''):
-        """ Inputs: team_one, team_two as lists of playerIDs; team_one_score, team_two_score, season as ints
-            Outputs: none
-
-            Adds game to game history, updates Players to have another win/loss/draw
-            """
+    def add_game(self, team_one, team_two, team_one_score, team_two_score, notes=''):
+        """
+        Adds a Game to game_history.pkl
+        :param team_one: list of playerIDs
+        :param team_two: list of playerIDs
+        :param team_one_score: team one's score as int
+        :param team_two_score: team two's score as int
+        :param notes: optional notes about the game
+        :return: None
+        """
         # Game class requires lists of Players, but add_game only requires playerIDs, so we'll need to
         # make new teams composed of Player classes
         p_team_one = []
@@ -78,7 +81,7 @@ class History:
         for playerID in team_two:
             p_team_two.append(self.roster[playerID])
 
-        new_game = Game(p_team_one, p_team_two, team_one_score, team_two_score, self.current_season, timestamp, notes)
+        new_game = Game(p_team_one, p_team_two, team_one_score, team_two_score, self.current_season, notes)
         self.game_history[new_game.gameID] = new_game
         pkl.dump(self.game_history, open(self.game_history_name, "wb"))  # update game_history pickle file after change
 
@@ -116,12 +119,12 @@ class History:
         self.num_games = len(self.game_history)
 
     def remove_game(self, gameID):
-        """ Inputs: gameID as string
-            Outputs: True if successful, False if game with gameID could not be found
-
-            Finds game in game_history and deletes it, then updates players so they have one less win/loss/draw
+        """
+        Finds game in game_history and deletes it, then updates players so they have one less win/loss/draw
             IMPORTANT NOTE: This will not revert changes to players' skills or rating scores
-            """
+        :param gameID: string
+        :return: True if game is removed, False otherwise
+        """
         if self.game_history[gameID] is not None:
             team_one = self.game_history[gameID].team_one
             team_two = self.game_history[gameID].team_two
@@ -152,11 +155,10 @@ class History:
         print(table)
 
     def clear_roster(self):
-        """ Inputs: None
-            Outputs: None
-
-            Overwrites roster pkl file and then sets History's roster equal to empty roster pkl file
-            """
+        """
+        Overwrites roster pickle file and then sets History's roster equal to empty roster pickle file
+        :return: None
+        """
         empty_dict = {}
         empty_df = DataFrame([[]])
         pkl.dump(empty_dict, open(self.roster_name, "wb"))
