@@ -3,6 +3,7 @@ from random import shuffle
 from math import ceil, log2
 import trueskill as ts
 from prettytable import PrettyTable
+from pandas import DataFrame
 
 from Player import Player
 from Game import Game
@@ -32,12 +33,18 @@ class History:
             print("Warning! The google sheet might only be configured to have less than 100 players. Pls fix.")
 
     def add_player(self, name, playerID="", wins=0, losses=0, draws=0):
-        """ Inputs: Player name as string
-            Outputs: none"""
-        # TODO: change so this handles creating playerID in a way that prevents playerID duplicates
+        """
+        :param name:
+        :param playerID:
+        :param wins:
+        :param losses:
+        :param draws:
+        :return:
+        """
         skill = self.env.create_rating()
         new_player = Player(name, skill, self.num_players + 1, playerID, wins, losses, draws)
         self.roster[new_player.playerID] = new_player
+        self.num_players = len(self.roster)
         pkl.dump(self.roster, open(self.roster_name, "wb"))  # update pickle file after change
         print(f'New player added: {new_player.name} ({new_player.playerID})')
 
@@ -49,6 +56,7 @@ class History:
             """
         if self.roster[playerID] is not None:
             del self.roster[playerID]
+            self.num_players = len(self.roster)
             pkl.dump(self.roster, open(self.roster_name, "wb"))  # update pickle file after change
             print(f"Player {playerID} removed.")
             return True
@@ -105,6 +113,8 @@ class History:
         if not self.suppress_messages:
             print(f"Game with ID '{new_game.gameID}' added.")
 
+        self.num_games = len(self.game_history)
+
     def remove_game(self, gameID):
         """ Inputs: gameID as string
             Outputs: True if successful, False if game with gameID could not be found
@@ -128,6 +138,7 @@ class History:
                     self.roster[playerID].losses -= 1
             return True
         print("Could not find game with ID:", gameID)
+        self.num_games = len(self.game_history)
         return False
 
     def print_roster(self):
@@ -147,8 +158,11 @@ class History:
             Overwrites roster pkl file and then sets History's roster equal to empty roster pkl file
             """
         empty_dict = {}
+        empty_df = DataFrame([[]])
         pkl.dump(empty_dict, open(self.roster_name, "wb"))
+        pkl.dump(empty_df, open("previous_playerID_responses.pkl", "wb"))
         self.roster = pkl.load(open(self.roster_name, "rb"))
+        self.num_players = len(self.roster)
         print("Roster cleared.\n")
 
     def print_game_history(self):
@@ -177,8 +191,11 @@ class History:
         :return: None
         """
         empty_dict = {}
+        empty_df = DataFrame([[]])
         pkl.dump(empty_dict, open(self.game_history_name, "wb"))
+        pkl.dump(empty_df, open("previous_game_responses.pkl", "wb"))
         self.game_history = pkl.load(open(self.game_history_name, "rb"))
+        self.num_games = len(self.game_history)
         print("Game History cleared.\n")
 
     def tournament(self, teams: list):
@@ -282,13 +299,3 @@ class History:
 
         print(f"\nThe winner(s) of this tournament are {advancers[0][2].name}. Congratulations!")
         print("--------------------TOURNAMENT END--------------------")
-
-
-
-def vs_sucks(everyone_knows):
-    """
-
-    :param everyone_knows:
-    :return:
-    """
-    pass
