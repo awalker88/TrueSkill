@@ -5,6 +5,7 @@ from os import getcwd, listdir
 from time import sleep
 from datetime import date, timedelta
 
+
 # TODO: create Top Upsets sheet
 # TODO: add player with longest winning streak (and losing?) to Rankings Pages
 # TODO: make sure adding games locally updates the google sheet too
@@ -12,12 +13,12 @@ from datetime import date, timedelta
 # TODO: write intro/instructions for sheet
 
 
-def new_game_responses(game_responses_sht, roster):
-    """ Pulls the new responses from sheet and returns a list well-formatted for adding to History
-    :param game_responses_sht: worksheet to pull new responses from
+def get_new_game_responses(game_responses_sht, roster):
+    """ Pulls all responses from sheet, figures out which ones are new, and returns thm formatted for adding to History
+    :param game_responses_sht: worksheet to pull responses from
     :param roster: roster of players from History class
-    :returns: list that is easily read by add_game(), looks like [[team_one], [team_two], team_one_score,
-                                                                   team_two_score, timestamp, notes]
+    :returns: list of new responses that are easily read by add_game(): [[team_one], [team_two], team_one_score,
+                                                                          team_two_score, timestamp, notes]
     """
     # load previous game submissions
     if 'previous_game_responses.pkl' not in listdir(getcwd()):
@@ -32,23 +33,23 @@ def new_game_responses(game_responses_sht, roster):
     current = current[current.timestamp != '']  # remove blank rows
     current = current[current.timestamp != 'Timestamp']  # gets rid of sheet header row
 
-    # in set notation, this does current - previous
+    # in set notation, this does: current - previous
     new_submissions = pd.concat([current, previous, previous], sort=False).drop_duplicates(keep=False)
 
     # format responses into: [[team_one], [team_two], team_one_score, team_two_score, timestamp, notes]
     new_submissions = new_submissions.values.tolist()
-    lst = []
+    formatted_new_submissions = []
     for submission in new_submissions:
-        lst.append([submission[1].replace(' ', '').split(','),  # team one
-                    submission[2].replace(' ', '').split(','),  # team two
-                    int(submission[3]),                         # team one score
-                    int(submission[4]),                         # team two score
-                    submission[0],                              # timestamp
-                    submission[5]])                             # notes
+        formatted_new_submissions.append([submission[1].replace(' ', '').split(','),  # team one
+                                          submission[2].replace(' ', '').split(','),  # team two
+                                          int(submission[3]),  # team one score
+                                          int(submission[4]),  # team two score
+                                          submission[0],  # timestamp
+                                          submission[5]])  # notes
 
     # print out players if playerID not in roster
     is_new = False
-    for response in lst:
+    for response in formatted_new_submissions:
         for playerID in response[0] + response[1]:
             if playerID not in roster:
                 print(f"Could not find player with ID: {playerID}")
@@ -63,7 +64,7 @@ def new_game_responses(game_responses_sht, roster):
     combined = combined.drop_duplicates()
     pkl.dump(combined, open('previous_game_responses.pkl', 'wb'))
 
-    return lst
+    return formatted_new_submissions
 
 
 def add_new_game_responses(new_game_responses, history):
@@ -81,11 +82,11 @@ def add_new_game_responses(new_game_responses, history):
             history.add_game(response[0], response[1], response[2], response[3], response[4])
 
 
-def get_new_players(player_responses_sht, history):
+def add_new_players(player_responses_sht, history):
     """
     Retrieves and checks new playerID requests
     :param player_responses_sht:
-    :param roster:
+    :param history: History class that we pull the roster from
     :return: list of new [timestamp, name]s
     """
     # load
@@ -101,33 +102,23 @@ def get_new_players(player_responses_sht, history):
     current = current[current.timestamp != 'Timestamp']  # gets rid of sheet header row
 
     # in set notation, this does: current - previous
-    to_add = []
     new_submissions = pd.concat([current, previous, previous], sort=False).drop_duplicates(keep=False)
+    if len(new_submissions) == 0:
+        print("No new players")
+    history.print_roster()
     for submission in new_submissions.values:
         # see if anyone else in the roster has that exact name
         for playerID in history.roster:
             if history.roster[playerID].name == submission[1]:
-                print(f"There is already a player with name {submission[1]}, make sure it's not duplicate.")
+                print(f"\nThere is already a player with name {submission[1]}, make sure it's not duplicate.")
         #
-        history.print_roster()
-        get = input(f'Do you want to add {submission[1]} (submitted: {submission[0]})? Current roster is above. (y/n)?')
+        get = input(f'\nDo you want to add {submission[1]} (submitted: {submission[0]})? (y/n)?')
         if get.lower() == 'y':
-            to_add.append(submission)
+            history.add_player(submission[1])
 
     combined = pd.concat([current, previous], ignore_index=True, sort=False)
     combined = combined.drop_duplicates()
     pkl.dump(combined, open('previous_playerID_responses.pkl', 'wb'))
-
-    return to_add
-
-
-def add_new_players(new_playerID_responses, history):
-    if not new_playerID_responses:
-        print("No new playerID responses")
-    else:
-        print(f"{len(new_playerID_responses)} new player response(s)")
-        for response in new_playerID_responses:
-            history.add_player(response[1])
 
 
 def update_rankings(rankings_sht, roster, first_rankings_cell, last_rankings_cell):
@@ -144,26 +135,8 @@ def update_rankings(rankings_sht, roster, first_rankings_cell, last_rankings_cel
 
     rankings_sht.clear(first_rankings_cell, last_rankings_cell[0] + '1000')  # clears range to paste player rankings
     model_cell = pyg.Cell('A1')
-    rankings_sht.get_values(first_rankings_cell, last_rankings_cell[0] + '1000', returnas='range')\
+    rankings_sht.get_values(first_rankings_cell, last_rankings_cell[0] + '1000', returnas='range') \
         .apply_format(model_cell)  # format range to be blank
-    model_cell.borders = {"top": {
-                                "style": "SOLID",
-                                "width": 1,
-                                "color": {}},
-                          "bottom": {
-                              "style": "SOLID",
-                              "width": 1,
-                              "color": {}},
-                          "left": {
-                              "style": "SOLID",
-                              "width": 1,
-                              "color": {}},
-                          "right": {
-                              "style": "SOLID",
-                              "width": 1,
-                              "color": {}}}
-
-    rankings_sht.get_values(first_rankings_cell, last_rankings_cell, returnas='range').apply_format(model_cell)
     rankings_sht.update_values(first_rankings_cell, ranking_list)  # TODO: Fix when there are no players and rl is empty
 
 
@@ -204,30 +177,43 @@ def update_champions_list(champions_sheet, rankings_sheet, first_rankings_cell, 
     champion
     :param champions_sheet: sheet with previous champions
     :param rankings_sheet: sheet with current rankings
-    :param roster: roster of Players
+    :param first_rankings_cell: cells to pull champion info from
+    :param last_rankings_cell: cells to pull champion info from
     :return: None
     """
+    # update champion list
     current = pd.DataFrame(champions_sheet.get_all_values())
-    current = current[1:]  # gets rid of header row
+    current = current[1:]  # gets rid of header row from sheet
     current.columns = ['week', 'champion', 'playerID', 'rating']
     current = current[current.week != '']  # remove blank rows
     latest_week = current['week'][len(current)]
     split = latest_week.split("/")
-    latest_week = date(2000+int(split[2]), int(split[0]), int(split[1]))  # note: have to modify after the year 2099
+    latest_week = date(int(split[2]), int(split[0]), int(split[1]))  # note: have to modify after the year 2099
+    # check we need to crown a champion
     if (date.today() - latest_week).days >= 7:
+        no_players = False
+        top_player_is_zero = False
+        # checks if a champion even can be crowned
+        if rankings_sheet.get_value(first_rankings_cell) == '':
+            no_players = True
+            print('No players in Rankings sheet. No champion.')
+
+        if int(rankings_sheet.get_value(last_rankings_cell)) == 0:
+            print('Top player has not played any games. No champion.')
+            top_player_is_zero = True
+
         # if it's been a week since we last crowned a champion, crown a new one
-        champion = rankings_sheet.get_values(first_rankings_cell, last_rankings_cell[0] + first_rankings_cell[1:])
         last_monday = str(date.today() - timedelta(days=date.today().weekday()))
-        champion[0][0] = f"{last_monday[5:7]}/{last_monday[8:10]}/{last_monday[2:4]}"
-        combined = pd.concat([current, pd.DataFrame(champion, columns=['week', 'champion', 'playerID', 'rating'])])
+        if no_players or top_player_is_zero:
+            new_champion = [[last_monday, 'No champion', 'No champion', 'NA']]
+        else:
+            new_champion = rankings_sheet.get_values(first_rankings_cell, last_rankings_cell[0] + first_rankings_cell[1:])
+        new_champion[0][0] = f"{last_monday[5:7]}/{last_monday[8:10]}/{last_monday[2:4]}"
+        combined = pd.concat([current, pd.DataFrame(new_champion, columns=['week', 'champion', 'playerID', 'rating'])])
         champions_sheet.update_values('A2', combined.values.tolist())
-        print(f"New Champion: {champion}")
+        print(f"New Champion added: {new_champion}")
     else:
         print("Not time for a new champion yet.")
-
-
-def update_top_upsets(roster):
-    pass
 
 
 def update_player_list(player_list_sheet: pyg.Worksheet, roster):
@@ -256,5 +242,22 @@ def update_player_list(player_list_sheet: pyg.Worksheet, roster):
     player_list_sheet.clear('A1', 'P101')
     player_list_sheet.update_values('A1', roster_list)
 
-def update_game_list(game_list):
-    pass
+
+def update_game_list(game_list_sheet, history):
+    """
+    Updates 'Game List' sheet to include every game in history's game history
+    :param game_list_sheet: sheet to be updated
+    :param history: History class containing the game history
+    :return: None
+    """
+    game_history = history.game_history
+
+    game_list_sheet.clear()
+
+    formatted = [['Timestamp', 'Team One', 'Team Two', 'Team One Score', 'Team Two Score']]
+    for game_key in game_history:
+        game = game_history[game_key]
+        formatted.append([game.timestamp, game.get_team_name(1), game.get_team_name(2), game.team_one_score,
+                          game.team_two_score])
+
+    game_list_sheet.update_values('A1', formatted)
