@@ -30,15 +30,8 @@ class Game:
     def __str__(self):
         names = ""
 
-        for player in self.team_one:
-            names += player.name + ", "
-        names = names[:-2]  # drops last comma
-        names += f" ({self.team_one_score}) vs. "
-
-        for player in self.team_two:
-            names += player.name + ", "
-        names = names[:-2]  # drops last comma
-        names += f" ({self.team_two_score})"
+        names += f"{self.get_team_name(1)} ({self.team_one_score})  "
+        names += f"{self.get_team_name(2)} ({self.team_two_score})  "
 
         outcome = "Winner(s): "
         for player in self.winner:
@@ -76,12 +69,22 @@ class Game:
         env = ts.global_env()
         return round(env.cdf(delta_mu / denom), 4)
 
-    def get_team_name(self, team):
+    def get_team_name(self, team_num):
         name = ""
-        for player in team:
-            name += player.playerID + ", "
-        name = name[:-2]  # drops last comma
-        return name
+        if team_num == 1:
+            for player in self.team_one:
+                name += player.playerID + ", "
+            name = name[:-2]  # drops last comma
+            return name
+        elif team_num == 2:
+            for player in self.team_two:
+                name += player.playerID + ", "
+            name = name[:-2]  # drops last comma
+            return name
+        else:
+            print("team_num must be either 1 or 2")
+            raise ValueError
+
 
 
 
