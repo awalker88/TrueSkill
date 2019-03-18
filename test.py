@@ -21,7 +21,6 @@ if fresh:
     h.add_player("britta", playerID="britta01")
     h.add_player("annie", playerID="annie01")
     h.add_player("pierce", playerID="pierce01")
-    h.add_player("Cole Karczewski", playerID="colekarczewski01")
     r = {}
     i = 1
     for player in h.roster:
@@ -62,14 +61,10 @@ if tournament:
                   ["bob01"],
                   ["alice01"],
                   ["john01"],
-                  ["walt01"],
-                  ["holly01"],
-                  ["marie01"],
                   ["dean01"],
                   ["jeff01"],
                   ["abed01"],
                   ["troy01"],
                   ["britta01"],
                   ["annie01"],
-                  ["ken01"],
                   ["pierce01"]])
