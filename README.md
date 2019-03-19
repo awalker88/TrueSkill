@@ -2,7 +2,7 @@
 Automated system to track office ping pong using Google Sheets for the front end, Google Forms for game and player submission, Python for automation, and sublee's trueskill library for tracking player skill.
 
 ## Background
-I was looking for a side project to occupy my downtime, and 
+I was looking for a side project to occupy my downtime, and figured why not combine three of my favorite things: Ping Pong, coding, and competition!
 
 ## How it works
 
