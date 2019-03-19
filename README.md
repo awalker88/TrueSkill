@@ -14,6 +14,14 @@ Upon initialization, a new History class reads in ```roster.pkl``` and ```game_d
 
 **3. ```refresh.py```** - This is file that brings it all together. It first creates a History class that loads in all the local data. Then it connects to Google sheets and pulls all of the new game and player submissions. It asks if everything looks ok, then automatically updates all the info on the front-facing Sheets document using the functions from sheets_inteface.
 
+**Rankings page that users see when they look at the google sheet:**
+
+<img src="https://github.com/awalker88/ping-pong-ts/blob/master/images/rankings.jpg" width="598" height="335" />
+
+**Tool to compare skill over time:**
+
+<img src="https://github.com/awalker88/ping-pong-ts/blob/master/images/skillchart.jpg" width="598" height="247" />
+
 To read more about how TrueSkill works to rank players, here are a couple links that helped me:
 http://www.moserware.com/2010/03/computing-your-skill.html
 https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/
@@ -36,3 +44,4 @@ https://pygsheets.readthedocs.io/en/stable/ and https://github.com/nithinmurali/
 * **Project:** Andrew Walker  
 * **TrueSkill Implementation:** https://github.com/sublee/trueskill
 * **Original TrueSkill Paper:** https://www.microsoft.com/en-us/research/wp-content/uploads/2006/01/TR-2006-80.pdf
+* **pygsheets:** https://github.com/nithinmurali/pygsheets
