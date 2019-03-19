@@ -5,7 +5,7 @@ import pickle as pkl
 
 fresh = True
 if fresh:
-    h.clear_game_history()
+    h.clear_game_database()
     h.clear_roster()
     h.add_player("andrew", playerID="andrew01")
     h.add_player("erin", playerID="erin01")
@@ -35,7 +35,7 @@ if fresh:
         while t1s == t2s:
             t2s = randint(1, 22)
         h.add_game([p1], [p2], t1s, t2s)
-    h.print_game_history()
+    h.print_game_database()
     h.print_roster()
 
     h.roster['andrew01'].skill_history['2019-03-11'] = 300

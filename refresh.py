@@ -31,16 +31,16 @@ new_games = sheets_interface.get_new_game_responses(game_responses_sheet, h.rost
 sheets_interface.add_new_game_responses(new_games, h)
 
 # update Rankings page
-sheets_interface.update_rankings(rankings_sheet, h.roster, frc, lrc)
+sheets_interface.update_rankings(rankings_sheet, h, frc, lrc)
 
 # update Skill History page
-sheets_interface.update_skill_history(skill_history_sheet, start_date=date(2019, 3, 11), roster=h.roster)
+sheets_interface.update_skill_history(skill_history_sheet, date(2019, 3, 11), h)
 
 # update Champions page
 sheets_interface.update_champions_list(champions_sheet, rankings_sheet, frc, lrc)
 
 # update Player List page
-sheets_interface.update_player_list(player_list_sheet, h.roster)
+sheets_interface.update_player_list(player_list_sheet, h)
 
 # update Game List page
 sheets_interface.update_game_list(game_list_sheet, h)

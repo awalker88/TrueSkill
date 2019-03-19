@@ -6,13 +6,6 @@ from time import sleep
 from datetime import date, timedelta
 
 
-# TODO: create Top Upsets sheet
-# TODO: add player with longest winning streak (and losing?) to Rankings Pages
-# TODO: make sure adding games locally updates the google sheet too
-# TODO: add easy to read game history sheet (highlight winner)
-# TODO: write intro/instructions for sheet
-
-
 def get_new_game_responses(game_responses_sht, roster):
     """ Pulls all responses from sheet, figures out which ones are new, and returns thm formatted for adding to History
     :param game_responses_sht: worksheet to pull responses from
@@ -27,13 +20,13 @@ def get_new_game_responses(game_responses_sht, roster):
         pkl.dump(header, open('previous_game_responses.pkl', 'wb'))
     previous = pkl.load(open('previous_game_responses.pkl', 'rb'))
 
-    # load in new game submissions
+    # load in all submissions in google sheet
     current = pd.DataFrame(game_responses_sht.get_all_values())
     current.columns = ['timestamp', 'team_one', 'team_two', 'team_one_score', 'team_two_score', 'notes']
     current = current[current.timestamp != '']  # remove blank rows
     current = current[current.timestamp != 'Timestamp']  # gets rid of sheet header row
 
-    # in set notation, this does: current - previous
+    # we want just new submissions, so (in set notation), this does: current - previous
     new_submissions = pd.concat([current, previous, previous], sort=False).drop_duplicates(keep=False)
 
     # format responses into: [[team_one], [team_two], team_one_score, team_two_score, timestamp, notes]
@@ -121,10 +114,18 @@ def add_new_players(player_responses_sht, history):
     pkl.dump(combined, open('previous_playerID_responses.pkl', 'wb'))
 
 
-def update_rankings(rankings_sht, roster, first_rankings_cell, last_rankings_cell):
+def update_rankings(rankings_sht, h, first_rankings_cell, last_rankings_cell):
+    """
+    Gets top players in a history's roster and updates the ranking table in rankings_sht
+    :param rankings_sht: google sheet with rankings table
+    :param h: History class with roster you want to pull from
+    :param first_rankings_cell: top left cell of your rankings table
+    :param last_rankings_cell: top right cell of your rankings table
+    :return:
+    """
     ranking_list = []
-    for playerID in roster:
-        player = roster[playerID]
+    for playerID in h.roster:
+        player = h.roster[playerID]
         ranking_list.append([player.ranking_score, player.name, player.playerID])
 
     ranking_list.sort()
@@ -140,7 +141,14 @@ def update_rankings(rankings_sht, roster, first_rankings_cell, last_rankings_cel
     rankings_sht.update_values(first_rankings_cell, ranking_list)  # TODO: Fix when there are no players and rl is empty
 
 
-def update_skill_history(skill_history, start_date, roster):
+def update_skill_history(skill_history_sht, start_date, h):
+    """
+    updates skill history sheet with new dates and players
+    :param skill_history_sht: google sheet to update
+    :param start_date: date you want to first track skill history from
+    :param h: History class containing players and games
+    :return: None
+    """
     base = date.today()
     num_days = base - start_date
 
@@ -149,13 +157,13 @@ def update_skill_history(skill_history, start_date, roster):
         date_header.append(str(start_date + timedelta(i)))
 
     date_df = pd.DataFrame(columns=date_header)
-    date_df['playerID'] = [roster[key].playerID for key in roster]
+    date_df['playerID'] = [h.roster[key].playerID for key in h.roster]
 
     date_header.pop(0)  # removes playerID column so it's just dates again
     # loop through and add skill for that day if it exists, else repeat the previous date's skill
     for index in range(len(date_df)):
         playerID = date_df['playerID'][index]
-        player = roster[playerID]
+        player = h.roster[playerID]
         # all players start at 0 until their first non-zero ranking score, then their latest is... their latest
         # this way the graph will look consistent across time even if players don't play every day
         latest_ranking = 0
@@ -166,9 +174,9 @@ def update_skill_history(skill_history, start_date, roster):
             else:
                 date_df[col][index] = latest_ranking
 
-    skill_history.clear()
-    skill_history.update_values('A1', [date_df.columns.values.tolist()])
-    skill_history.update_values('A2', date_df.values.tolist())
+    skill_history_sht.clear()
+    skill_history_sht.update_values('A1', [date_df.columns.values.tolist()])
+    skill_history_sht.update_values('A2', date_df.values.tolist())
 
 
 def update_champions_list(champions_sheet, rankings_sheet, first_rankings_cell, last_rankings_cell):
@@ -216,28 +224,34 @@ def update_champions_list(champions_sheet, rankings_sheet, first_rankings_cell, 
         print("Not time for a new champion yet.")
 
 
-def update_player_list(player_list_sheet: pyg.Worksheet, roster):
+def update_player_list(player_list_sheet: pyg.Worksheet, h):
+    """
+
+    :param player_list_sheet: google sheet you want to update
+    :param h: History class with roster of players
+    :return: None
+    """
     roster_list = [['PlayerID', 'Name', 'Win Rate', 'Wins', 'Losses', 'Draws', 'Games Played',
                     'Rating Score', 'Points Scored', 'Points Lost', 'Average Points Per Game', 'Average Point Margin',
                     'Current Winning Streak', 'Longest Winning Streak', 'Current Losing Streak',
                     'Longest Losing Streak']]
-    for playerID in roster:
+    for playerID in h:
         roster_list.append([playerID,
-                            roster[playerID].name,
-                            roster[playerID].get_win_rate(),
-                            roster[playerID].wins,
-                            roster[playerID].losses,
-                            roster[playerID].draws,
-                            roster[playerID].games_played,
-                            roster[playerID].ranking_score,
-                            roster[playerID].points_scored,
-                            roster[playerID].points_lost,
-                            roster[playerID].average_ppg,
-                            roster[playerID].average_point_margin,
-                            roster[playerID].current_winning_streak,
-                            roster[playerID].longest_winning_streak,
-                            roster[playerID].current_losing_streak,
-                            roster[playerID].longest_losing_streak
+                            h[playerID].name,
+                            h[playerID].get_win_percentage(),
+                            h[playerID].wins,
+                            h[playerID].losses,
+                            h[playerID].draws,
+                            h[playerID].games_played,
+                            h[playerID].ranking_score,
+                            h[playerID].points_scored,
+                            h[playerID].points_lost,
+                            h[playerID].average_ppg,
+                            h[playerID].average_point_margin,
+                            h[playerID].current_winning_streak,
+                            h[playerID].longest_winning_streak,
+                            h[playerID].current_losing_streak,
+                            h[playerID].longest_losing_streak
                             ])
     player_list_sheet.clear('A1', 'P101')
     player_list_sheet.update_values('A1', roster_list)

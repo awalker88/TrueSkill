@@ -1,5 +1,4 @@
 """Contains info about a single player."""
-from random import randint
 from datetime import datetime
 from trueskill import Rating
 
@@ -8,7 +7,7 @@ class Player:
 
     def __init__(self, name, skill, player_counter, playerID="", wins=0, losses=0, draws=0):
         if playerID == "":
-            self.playerID = name.replace(" ", "") + str(player_counter)  # playerID is name plus 2 random digits
+            self.playerID = name.replace(" ", "") + str(player_counter)  # playerID is name plus their order in history
         else:
             self.playerID = playerID
         self.name = name
@@ -42,17 +41,26 @@ class Player:
     def __str__(self):
         header = "Player Name: " + self.name + "  " + "ID: " + str(self.playerID)
         return f"\n{header} " \
-            f"\nWin Rate: {self.get_win_rate()} " \
+            f"\nWin Rate: {self.get_win_percentage()} " \
             f"\nSkill Mean: {round(self.skill.mu, 2)} Skill Variance: {round(self.skill.sigma, 2)}" \
             f"\nRanking Score: {self.ranking_score}\n"
 
-    def get_win_rate(self):
+    def get_win_percentage(self):
+        """
+        Gets this players win percentage (wins / (wins + losses))
+        :return: string representation of win rate, rounded to the hundredths place (ex. 34.52%)
+        """
         if self.wins + self.losses == 0:
             return "No games played"
         else:
             return str(round(100*self.wins / (self.wins + self.losses), 2)) + "%"
 
     def update_skill(self, new_skill: Rating):
+        """
+        Refreshes player skill rating and adds old skill rating to this player's skill_history
+        :param new_skill: new Rating object
+        :return: None
+        """
         self.mu_history.append(self.skill.mu)
         self.sigma_history.append(self.skill.sigma)
         self.skill = Rating(new_skill)
@@ -61,7 +69,13 @@ class Player:
         formatted_month = '%02d' % dt.month
         self.skill_history[f'{dt.year}-{formatted_month}-{dt.day}'] = self.ranking_score
 
-    def update_after_game(self, players_score, opponents_score):
+    def update_stats_after_game(self, players_score: int, opponents_score: int):
+        """
+        updates player's stats like wins, average pts, etc.
+        :param players_score: this player's score as int
+        :param opponents_score: opponent's score as int
+        :return:
+        """
         self.games_played += 1
         self.points_scored += players_score
         self.points_lost += opponents_score

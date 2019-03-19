@@ -10,7 +10,7 @@ run_sample_games = True
 run_sample_tournament = False
 
 if make_new_roster_and_game_history:
-    h.clear_game_history()
+    h.clear_game_database()
     h.clear_roster()
     h.add_player("andrew", playerID="andrew01")
     h.add_player("erin", playerID="erin01")
@@ -25,7 +25,7 @@ if print_roster:
     h.print_roster()
 
 if print_game_history:
-    h.print_game_history()
+    h.print_game_database()
 
 if run_sample_games:
     print("Before 1st game")
@@ -43,7 +43,7 @@ if run_sample_games:
     print(h.roster["andrew01"])
 
 if print_game_history:
-    h.print_game_history()
+    h.print_game_database()
 
 if run_sample_tournament:
     h.tournament([["andrew01", "jesse01"],

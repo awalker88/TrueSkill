@@ -11,8 +11,7 @@ from TournamentTeam import TournamentTeam
 
 
 class History:
-
-    def __init__(self, roster_name="roster.pkl", game_history_name="game_history.pkl"):
+    def __init__(self, roster_name="roster.pkl", game_history_name="game_database.pkl"):
         self.roster_name = roster_name
         self.game_history_name = game_history_name
         self.roster = pkl.load(open(self.roster_name, "rb"))
@@ -64,7 +63,7 @@ class History:
 
     def add_game(self, team_one, team_two, team_one_score, team_two_score, notes=''):
         """
-        Adds a Game to game_history.pkl
+        Adds a Game to game_database.pkl
         :param team_one: list of playerIDs
         :param team_two: list of playerIDs
         :param team_one_score: team one's score as int
@@ -87,9 +86,9 @@ class History:
 
         # update player wins/losses/draws
         for playerID in team_one:
-            self.roster[playerID].update_after_game(team_one_score, team_two_score)
+            self.roster[playerID].update_stats_after_game(team_one_score, team_two_score)
         for playerID in team_two:
-            self.roster[playerID].update_after_game(team_two_score, team_one_score)
+            self.roster[playerID].update_stats_after_game(team_two_score, team_one_score)
 
         # create rating groups (ts.rate() function takes in lists of dictionaries)
         rating_groups = []
@@ -145,12 +144,16 @@ class History:
         return False
 
     def print_roster(self):
+        """
+        Prints a nice table of every player in this history's database
+        :return:
+        """
         table = PrettyTable()
         table.field_names = ['Player ID', 'Name', 'Win Rate', 'Skill Mean', 'Skill Variance', 'Ranking Score',
                              'Games Played']
         for playerID in self.roster:
             p = self.roster[playerID]
-            table.add_row([p.playerID, p.name, p.get_win_rate(), round(p.skill.mu, 2), round(p.skill.sigma, 2),
+            table.add_row([p.playerID, p.name, p.get_win_percentage(), round(p.skill.mu, 2), round(p.skill.sigma, 2),
                            round(p.ranking_score, 2), p.games_played])
         print(table)
 
@@ -167,7 +170,11 @@ class History:
         self.num_players = len(self.roster)
         print("Roster cleared.\n")
 
-    def print_game_history(self):
+    def print_game_database(self):
+        """
+        Prints a nice table of every game in this history's database
+        :return: None
+        """
         table = PrettyTable()
         table.field_names = ['Game ID', 'Team One', 'Team Two', 'Score', 'Predicted Winner', 'Actual Winner']
         for gameID in self.game_history:
@@ -187,9 +194,9 @@ class History:
 
         print(table)
 
-    def clear_game_history(self):
+    def clear_game_database(self):
         """
-        Overwrites game_history pkl file and then sets History's roster equal to empty roster pkl file
+        Overwrites game_database pkl file and then sets History's roster equal to empty roster pkl file
         :return: None
         """
         empty_dict = {}
@@ -198,7 +205,7 @@ class History:
         pkl.dump(empty_df, open("previous_game_responses.pkl", "wb"))
         self.game_history = pkl.load(open(self.game_history_name, "rb"))
         self.num_games = len(self.game_history)
-        print("Game History cleared.\n")
+        print("Game Database cleared.\n")
 
     def tournament(self, teams: list):
         """
@@ -272,7 +279,7 @@ class History:
                         nextFinished = int(input("What game would you like to report finished?: "))
                         remainingGameNums.index(nextFinished)
                         break
-                    except Exception:
+                    except ValueError:
                         print("Invalid game number")
 
                 gameIndex = 0
