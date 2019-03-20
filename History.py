@@ -11,13 +11,13 @@ from TournamentTeam import TournamentTeam
 
 
 class History:
-    def __init__(self, roster_name="roster.pkl", game_history_name="game_database.pkl"):
+    def __init__(self, roster_name="roster.pkl", game_database_name="game_database.pkl"):
         self.roster_name = roster_name
-        self.game_history_name = game_history_name
+        self.game_database_name = game_database_name
         self.roster = pkl.load(open(self.roster_name, "rb"))
-        self.game_history = pkl.load(open(self.game_history_name, "rb"))
+        self.game_database = pkl.load(open(self.game_database_name, "rb"))
         self.num_players = len(self.roster)
-        self.num_games = len(self.game_history)
+        self.num_games = len(self.game_database)
         self.current_season = 1  # TODO: Add support for soft reset of ranks with seasons
         self.suppress_messages = False
 
@@ -81,8 +81,8 @@ class History:
             p_team_two.append(self.roster[playerID])
 
         new_game = Game(p_team_one, p_team_two, team_one_score, team_two_score, self.current_season, notes)
-        self.game_history[new_game.gameID] = new_game
-        pkl.dump(self.game_history, open(self.game_history_name, "wb"))  # update game_history pickle file after change
+        self.game_database[new_game.gameID] = new_game
+        pkl.dump(self.game_database, open(self.game_database_name, "wb"))  # update game_database pkl file after change
 
         # update player wins/losses/draws
         for playerID in team_one:
@@ -115,21 +115,21 @@ class History:
         if not self.suppress_messages:
             print(f"Game with ID '{new_game.gameID}' added.")
 
-        self.num_games = len(self.game_history)
+        self.num_games = len(self.game_database)
 
     def remove_game(self, gameID):
         """
-        Finds game in game_history and deletes it, then updates players so they have one less win/loss/draw
+        Finds game in game_database and deletes it, then updates players so they have one less win/loss/draw
             IMPORTANT NOTE: This will not revert changes to players' skills or rating scores
         :param gameID: string
         :return: True if game is removed, False otherwise
         """
-        if self.game_history[gameID] is not None:
-            team_one = self.game_history[gameID].team_one
-            team_two = self.game_history[gameID].team_two
-            winner = self.game_history[gameID].winner
-            del self.game_history[gameID]
-            pkl.dump(self.game_history, open(self.game_history_name, "wb"))  # update pickle file after change
+        if self.game_database[gameID] is not None:
+            team_one = self.game_database[gameID].team_one
+            team_two = self.game_database[gameID].team_two
+            winner = self.game_database[gameID].winner
+            del self.game_database[gameID]
+            pkl.dump(self.game_database, open(self.game_database_name, "wb"))  # update pickle file after change
             # update player wins/losses
             for playerID in team_one + team_two:
                 if winner is None:
@@ -140,7 +140,7 @@ class History:
                     self.roster[playerID].losses -= 1
             return True
         print("Could not find game with ID:", gameID)
-        self.num_games = len(self.game_history)
+        self.num_games = len(self.game_database)
         return False
 
     def print_roster(self):
@@ -170,6 +170,13 @@ class History:
         self.num_players = len(self.roster)
         print("Roster cleared.\n")
 
+    def save_roster(self):
+        """
+        saves the current roster back to the roster pkl file
+        :return: None
+        """
+        pkl.dump(self.roster, open(self.roster_name, "wb"))
+
     def print_game_database(self):
         """
         Prints a nice table of every game in this history's database
@@ -177,8 +184,8 @@ class History:
         """
         table = PrettyTable()
         table.field_names = ['Game ID', 'Team One', 'Team Two', 'Score', 'Predicted Winner', 'Actual Winner']
-        for gameID in self.game_history:
-            g = self.game_history[gameID]
+        for gameID in self.game_database:
+            g = self.game_database[gameID]
             if g.t1_win_prob > 50.0:
                 pred_winner = f"Team One ({round(g.t1_win_prob, 2)})"
             else:
@@ -201,11 +208,18 @@ class History:
         """
         empty_dict = {}
         empty_df = DataFrame([[]])
-        pkl.dump(empty_dict, open(self.game_history_name, "wb"))
+        pkl.dump(empty_dict, open(self.game_database_name, "wb"))
         pkl.dump(empty_df, open("previous_game_responses.pkl", "wb"))
-        self.game_history = pkl.load(open(self.game_history_name, "rb"))
-        self.num_games = len(self.game_history)
+        self.game_database = pkl.load(open(self.game_database_name, "rb"))
+        self.num_games = len(self.game_database)
         print("Game Database cleared.\n")
+
+    def save_game_database(self):
+        """
+        saves the current game_database back to the game_database pkl file
+        :return: None
+        """
+        pkl.dump(self.game_database, open(self.game_database_name, "wb"))
 
     def tournament(self, teams: list):
         """
