@@ -6,7 +6,7 @@ import trueskill as ts
 
 class Game:
 
-    def __init__(self, team_one, team_two, team_one_score, team_two_score, season, timestamp, notes):
+    def __init__(self, team_one, team_two, team_one_score, team_two_score, season, timestamp=None, notes=''):
         self.team_one = team_one  # teams should be lists of playerIDs
         self.team_two = team_two
         self.team_one_score = team_one_score
@@ -20,7 +20,7 @@ class Game:
         else:
             self.winner = None
         if timestamp is None:
-            self.timestamp = datetime.now()
+            self.timestamp = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
         else:
             self.timestamp = timestamp
         self.gameID = self.create_game_id()

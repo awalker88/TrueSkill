@@ -5,6 +5,8 @@ from os import getcwd, listdir
 from time import sleep
 from datetime import date, timedelta
 
+# TODO: add ability to specify date when submitting game
+
 
 def get_new_game_responses(game_responses_ss, history):
     """ Pulls all responses from sheet, figures out which ones are new, and returns them formatted for adding to History
@@ -67,12 +69,17 @@ def add_new_game_responses(new_game_responses, history):
     :param history:
     :return: None
     """
+    # TODO: combine with get_new_game_responses
+    # TODO: add table of potential new games, then have me manually confirm games should be added
+    # TODO: make sure I'm always adding the new players before starting to add games
+    # TODO: don't save game responses to previous_game_responses until after they've been added to the sheet game list
     if not new_game_responses:
         print("No new game responses")
     else:
         print(f"{len(new_game_responses)} new response(s)")
         for response in new_game_responses:
-            history.add_game(response[0], response[1], response[2], response[3], response[4])
+            history.add_game(team_one=response[0], team_two=response[1], team_one_score=response[2],
+                             team_two_score=response[3], timestamp=response[4], notes=response[5])
 
 
 def add_new_players(player_responses_ss, history):
@@ -273,5 +280,4 @@ def update_game_list(game_list_sheet, history):
         game = game_database[game_key]
         formatted.append([game.timestamp, game.get_team_name(1), game.get_team_name(2), game.team_one_score,
                           game.team_two_score])
-
     game_list_sheet.update_values('A1', formatted)

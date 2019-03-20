@@ -61,7 +61,7 @@ class History:
         print("Could not find player with ID:", playerID)
         return False
 
-    def add_game(self, team_one, team_two, team_one_score, team_two_score, notes=''):
+    def add_game(self, team_one, team_two, team_one_score, team_two_score, timestamp=None, notes=''):
         """
         Adds a Game to game_database.pkl
         :param team_one: list of playerIDs
@@ -80,7 +80,8 @@ class History:
         for playerID in team_two:
             p_team_two.append(self.roster[playerID])
 
-        new_game = Game(p_team_one, p_team_two, team_one_score, team_two_score, self.current_season, notes=notes)
+        new_game = Game(p_team_one, p_team_two, team_one_score, team_two_score, self.current_season, timestamp=timestamp,
+                        notes=notes)
         self.game_database[new_game.gameID] = new_game
         self.save_game_database()
 
@@ -210,6 +211,7 @@ class History:
         empty_df = DataFrame([[]])
         self.save_game_database()
         pkl.dump(empty_df, open("previous_game_responses.pkl", "wb"))
+        print("previous_game_responses.pkl cleared\n")
         self.game_database = pkl.load(open(self.game_database_name, "rb"))
         self.num_games = len(self.game_database)
         print("Game Database cleared.\n")
