@@ -6,10 +6,10 @@ from time import sleep
 from datetime import date, timedelta
 
 
-def get_new_game_responses(game_responses_ss, roster):
-    """ Pulls all responses from sheet, figures out which ones are new, and returns thm formatted for adding to History
+def get_new_game_responses(game_responses_ss, history):
+    """ Pulls all responses from sheet, figures out which ones are new, and returns them formatted for adding to History
     :param game_responses_ss: worksheet to pull responses from
-    :param roster: roster of players from History class
+    :param history: History class containing your roster
     :returns: list of new responses that are easily read by add_game(): [[team_one], [team_two], team_one_score,
                                                                           team_two_score, timestamp, notes]
     """
@@ -44,7 +44,7 @@ def get_new_game_responses(game_responses_ss, roster):
     is_new = False
     for response in formatted_new_submissions:
         for playerID in response[0] + response[1]:
-            if playerID not in roster:
+            if playerID not in history.roster:
                 print(f"Could not find player with ID: {playerID}")
                 is_new = True
     if is_new:
@@ -235,23 +235,23 @@ def update_player_list(player_list_ss: pyg.Worksheet, h):
                     'Rating Score', 'Points Scored', 'Points Lost', 'Average Points Per Game', 'Average Point Margin',
                     'Current Winning Streak', 'Longest Winning Streak', 'Current Losing Streak',
                     'Longest Losing Streak']]
-    for playerID in h:
+    for playerID in h.roster:
         roster_list.append([playerID,
-                            h[playerID].name,
-                            h[playerID].get_win_percentage(),
-                            h[playerID].wins,
-                            h[playerID].losses,
-                            h[playerID].draws,
-                            h[playerID].games_played,
-                            h[playerID].ranking_score,
-                            h[playerID].points_scored,
-                            h[playerID].points_lost,
-                            h[playerID].average_ppg,
-                            h[playerID].average_point_margin,
-                            h[playerID].current_winning_streak,
-                            h[playerID].longest_winning_streak,
-                            h[playerID].current_losing_streak,
-                            h[playerID].longest_losing_streak
+                            h.roster[playerID].name,
+                            h.roster[playerID].get_win_percentage(),
+                            h.roster[playerID].wins,
+                            h.roster[playerID].losses,
+                            h.roster[playerID].draws,
+                            h.roster[playerID].games_played,
+                            h.roster[playerID].ranking_score,
+                            h.roster[playerID].points_scored,
+                            h.roster[playerID].points_lost,
+                            h.roster[playerID].average_ppg,
+                            h.roster[playerID].average_point_margin,
+                            h.roster[playerID].current_winning_streak,
+                            h.roster[playerID].longest_winning_streak,
+                            h.roster[playerID].current_losing_streak,
+                            h.roster[playerID].longest_losing_streak
                             ])
     player_list_ss.clear('A1', 'P101')
     player_list_ss.update_values('A1', roster_list)
@@ -264,13 +264,13 @@ def update_game_list(game_list_sheet, history):
     :param history: History class containing the game history
     :return: None
     """
-    game_history = history.game_history
+    game_database = history.game_database
 
     game_list_sheet.clear()
 
     formatted = [['Timestamp', 'Team One', 'Team Two', 'Team One Score', 'Team Two Score']]
-    for game_key in game_history:
-        game = game_history[game_key]
+    for game_key in game_database:
+        game = game_database[game_key]
         formatted.append([game.timestamp, game.get_team_name(1), game.get_team_name(2), game.team_one_score,
                           game.team_two_score])
 

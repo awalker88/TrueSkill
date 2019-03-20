@@ -22,12 +22,12 @@ game_responses_ss: pyg.Worksheet = workbook.worksheet_by_title('Game Responses')
 playerID_responses_ss: pyg.Worksheet = workbook.worksheet_by_title('Player ID Responses')
 skill_history_ss: pyg.Worksheet = workbook.worksheet_by_title('Skill History')
 game_list_ss: pyg.Worksheet = workbook.worksheet_by_title('Game List')
-
+print("here")
 # add new players
 sheets_interface.add_new_players(playerID_responses_ss, h)
 
 # add new games
-new_games = sheets_interface.get_new_game_responses(game_responses_ss, h.roster)
+new_games = sheets_interface.get_new_game_responses(game_responses_ss, h)
 sheets_interface.add_new_game_responses(new_games, h)
 
 # update Rankings page
