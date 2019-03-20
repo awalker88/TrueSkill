@@ -4,11 +4,12 @@ import pickle as pkl
 from os import getcwd, listdir
 from time import sleep
 from datetime import date, timedelta
+from prettytable import PrettyTable
 
 # TODO: add ability to specify date when submitting game
 
 
-def get_new_game_responses(game_responses_ss, history):
+def add_new_game_responses(game_responses_ss, history):
     """ Pulls all responses from sheet, figures out which ones are new, and returns them formatted for adding to History
     :param game_responses_ss: worksheet to pull responses from
     :param history: History class containing your roster
@@ -29,57 +30,51 @@ def get_new_game_responses(game_responses_ss, history):
     current = current[current.timestamp != 'Timestamp']  # gets rid of sheet header row
 
     # we want just new submissions, so (in set notation), this does: current - previous
-    new_submissions = pd.concat([current, previous, previous], sort=False).drop_duplicates(keep=False)
+    new_submissions = pd.concat([current, previous, previous], sort=False).drop_duplicates(keep=False).values.tolist()
 
-    # format responses into: [[team_one], [team_two], team_one_score, team_two_score, timestamp, notes]
-    new_submissions = new_submissions.values.tolist()
-    formatted_new_submissions = []
-    for submission in new_submissions:
-        formatted_new_submissions.append([submission[1].replace(' ', '').split(','),  # team one
-                                          submission[2].replace(' ', '').split(','),  # team two
-                                          int(submission[3]),  # team one score
-                                          int(submission[4]),  # team two score
-                                          submission[0],  # timestamp
-                                          submission[5]])  # notes
-
-    # print out players if playerID not in roster
-    is_new = False
-    for response in formatted_new_submissions:
-        for playerID in response[0] + response[1]:
-            if playerID not in history.roster:
-                print(f"Could not find player with ID: {playerID}")
-                is_new = True
-    if is_new:
-        print("\nPlease add new players to the roster or delete games with unknown players and re-run.\n")
-        sleep(0.5)  # makes error message look better
-        raise KeyError
-
-    # combine new and old
-    combined = pd.concat([current, previous], ignore_index=True, sort=False)
-    combined = combined.drop_duplicates()
-    pkl.dump(combined, open('previous_game_responses.pkl', 'wb'))
-
-    return formatted_new_submissions
-
-
-def add_new_game_responses(new_game_responses, history):
-    """
-    add new responses as Games to History
-    :param new_game_responses: list of list of the new responses
-    :param history:
-    :return: None
-    """
-    # TODO: combine with get_new_game_responses
-    # TODO: add table of potential new games, then have me manually confirm games should be added
-    # TODO: make sure I'm always adding the new players before starting to add games
-    # TODO: don't save game responses to previous_game_responses until after they've been added to the sheet game list
-    if not new_game_responses:
-        print("No new game responses")
+    if len(new_submissions) == 0:
+        print("No new game submissions.")
     else:
-        print(f"{len(new_game_responses)} new response(s)")
-        for response in new_game_responses:
-            history.add_game(team_one=response[0], team_two=response[1], team_one_score=response[2],
-                             team_two_score=response[3], timestamp=response[4], notes=response[5])
+        # format responses into: [[team_one], [team_two], team_one_score, team_two_score, timestamp, notes]
+        for index, submission in enumerate(new_submissions):
+            new_submissions[index] = [submission[1].replace(' ', '').split(','),  # team one
+                                      submission[2].replace(' ', '').split(','),  # team two
+                                      int(submission[3]),  # team one score
+                                      int(submission[4]),  # team two score
+                                      submission[0],  # timestamp
+                                      submission[5]]  # notes
+
+        # print out players if playerID not in roster
+        is_new_player = False
+        for submission in new_submissions:
+            for playerID in submission[0] + submission[1]:
+                if playerID not in history.roster:
+                    print(f"Could not find player with ID: {playerID}")
+                    is_new_player = True
+        if is_new_player:
+            print("\nPlease add new players to the roster or delete games with unknown players and re-run.\n")
+            sleep(0.5)  # makes error message look better
+            raise KeyError
+
+        # potential new games
+        table = PrettyTable(field_names=['Team One', 'Team Two', 'Team One Score', 'Team Two Score', 'Timestamp'])
+        for submission in new_submissions:
+            table.add_row([submission[0], submission[1], submission[2], submission[3], submission[4]])
+        print(f"Potential {len(new_submissions)} new game(s)")
+        print(table)
+
+        # now that we know everyone is in the system, add the games
+        for submission in new_submissions:
+            get = input(f'\nDo you want to add {submission[0]} ({submission[2]}) vs. {submission[1]} ({submission[3]}) '
+                        f'(submitted: {submission[4]})? (y/n)?')
+            if get.lower() == 'y':
+                history.add_game(team_one=submission[0], team_two=submission[1], team_one_score=submission[2],
+                                 team_two_score=submission[3], timestamp=submission[4], notes=submission[5])
+
+        # update the game history
+        combined = pd.concat([current, previous], ignore_index=True, sort=False)
+        combined = combined.drop_duplicates()
+        pkl.dump(combined, open('previous_game_responses.pkl', 'wb'))
 
 
 def add_new_players(player_responses_ss, history):
@@ -105,16 +100,18 @@ def add_new_players(player_responses_ss, history):
     new_submissions = pd.concat([current, previous, previous], sort=False).drop_duplicates(keep=False)
     if len(new_submissions) == 0:
         print("No new players")
-    history.print_roster()
-    for submission in new_submissions.values:
-        # see if anyone else in the roster has that exact name
-        for playerID in history.roster:
-            if history.roster[playerID].name == submission[1]:
-                print(f"\nThere is already a player with name {submission[1]}, make sure it's not duplicate.")
-        #
-        get = input(f'\nDo you want to add {submission[1]} (submitted: {submission[0]})? (y/n)?')
-        if get.lower() == 'y':
-            history.add_player(submission[1])
+    else:
+        print("Current roster:")
+        history.print_roster()
+        for submission in new_submissions.values:
+            # see if anyone else in the roster has that exact name
+            for playerID in history.roster:
+                if history.roster[playerID].name == submission[1]:
+                    print(f"\nThere is already a player with name {submission[1]}, make sure it's not duplicate.")
+            #
+            get = input(f'\nDo you want to add {submission[1]} (submitted: {submission[0]})? (y/n)?')
+            if get.lower() == 'y':
+                history.add_player(submission[1])
 
     combined = pd.concat([current, previous], ignore_index=True, sort=False)
     combined = combined.drop_duplicates()
@@ -196,6 +193,8 @@ def update_champions_list(champions_ss, rankings_ss, first_rankings_cell, last_r
     :param last_rankings_cell: cells to pull champion info from
     :return: None
     """
+    # TODO: change so that it's Week n | week start day | week end day | champion | rating score
+    # TODO: redo so it updates all the champions based on skill history
     # update champion list
     current = pd.DataFrame(champions_ss.get_all_values())
     current = current[1:]  # gets rid of header row from sheet

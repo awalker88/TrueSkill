@@ -68,6 +68,7 @@ class History:
         :param team_two: list of playerIDs
         :param team_one_score: team one's score as int
         :param team_two_score: team two's score as int
+        :param timestamp: string date in form MM/DD/YYYY hh:mm:ss or None to generate timestamp with current datetime
         :param notes: optional notes about the game
         :return: None
         """
@@ -80,8 +81,8 @@ class History:
         for playerID in team_two:
             p_team_two.append(self.roster[playerID])
 
-        new_game = Game(p_team_one, p_team_two, team_one_score, team_two_score, self.current_season, timestamp=timestamp,
-                        notes=notes)
+        new_game = Game(p_team_one, p_team_two, team_one_score, team_two_score, self.current_season,
+                        timestamp=timestamp, notes=notes)
         self.game_database[new_game.gameID] = new_game
         self.save_game_database()
 
@@ -207,14 +208,21 @@ class History:
         Overwrites game_database pkl file and then sets History's roster equal to empty roster pkl file
         :return: None
         """
+        # TODO: make sure erases player wins and losses
+        # clear game_database
         self.game_database = {}
-        empty_df = DataFrame([[]])
         self.save_game_database()
-        pkl.dump(empty_df, open("previous_game_responses.pkl", "wb"))
-        print("previous_game_responses.pkl cleared\n")
-        self.game_database = pkl.load(open(self.game_database_name, "rb"))
         self.num_games = len(self.game_database)
-        print("Game Database cleared.\n")
+        print("\nGame Database cleared.")
+
+        # reset player stats
+        for playerID in self.roster:
+            self.roster[playerID].reset_stats(new_skill=self.env.create_rating())
+        self.save_roster()
+
+        # clear previous responses
+        pkl.dump(DataFrame([[]]), open("previous_game_responses.pkl", "wb"))
+        print("previous_game_responses.pkl cleared\n")
 
     def save_game_database(self):
         """
@@ -250,7 +258,7 @@ class History:
         print(table)
         # teams are now in format [seedNum, skill, TournamentTeam object]
 
-        gameNumber = 1
+        game_number = 1
         for rnd in range(ceil(log2(len(sorted_teams)))):
             print(f"\nROUND: {rnd + 1}")
             advancers = []  # list of lists of advancing teams in form: [teamSeed, teamSkill, TournamentTeam object]
@@ -258,68 +266,68 @@ class History:
             # if there aren't an even number of teams, pick random bye from teams that have received fewest num of byes
             if len(sorted_teams) % 2 != 0:
                 shuffle(sorted_teams)  # shuffle teams so if tie, it won't just choose the last team with fewest byes
-                lowestNumByes, bye = 1000, 1000
+                lowest_num_byes, bye = 1000, 1000
                 for i in range(len(sorted_teams)):
-                    if sorted_teams[i][2].num_byes < lowestNumByes:
+                    if sorted_teams[i][2].num_byes < lowest_num_byes:
                         bye = i  # bye is this teams position in sorted_teams if they have had the lowest byes so far
-                        lowestNumByes = sorted_teams[i][2].num_byes
-                byersThisRnd = sorted_teams.pop(bye)
+                        lowest_num_byes = sorted_teams[i][2].num_byes
+                byers_this_rnd = sorted_teams.pop(bye)
                 # get names of team that got a bye
-                byersNames = byersThisRnd[2].get_name()
-                print(f"\nTeam: {byersNames} will receive a bye this round.")
-                byersThisRnd[2].num_byes += 1
+                byers_names = byers_this_rnd[2].get_name()
+                print(f"\nTeam: {byers_names} will receive a bye this round.")
+                byers_this_rnd[2].num_byes += 1
 
-                advancers.append(byersThisRnd)
+                advancers.append(byers_this_rnd)
                 sorted_teams.sort()
 
             # create matches for this round
-            gamesLeft = []
+            games_left = []
             for i in range(int(len(sorted_teams) / 2)):
-                gamesLeft.append([gameNumber, sorted_teams[i], sorted_teams[len(sorted_teams) - 1 - i]])
-                gameNumber += 1
+                games_left.append([game_number, sorted_teams[i], sorted_teams[len(sorted_teams) - 1 - i]])
+                game_number += 1
                 # games now in format [gameNum, [teamOneSeed, teamOneSkill, TournamentTeam object], [teamTwoSeed, ... ]]
 
-            while len(gamesLeft) > 0:
+            while len(games_left) > 0:
                 # print remaining games
                 print("\nRemaining games in this round:")
-                remainingGameNums = []
-                for game in gamesLeft:
-                    remainingGameNums.append(game[0])
-                    teamOne = game[1][2].name
-                    teamTwo = game[2][2].name
-                    print(f"Game {game[0]}: {teamOne} vs. {teamTwo}")
+                remaining_game_nums = []
+                for game in games_left:
+                    remaining_game_nums.append(game[0])
+                    team_one = game[1][2].name
+                    team_two = game[2][2].name
+                    print(f"Game {game[0]}: {team_one} vs. {team_two}")
 
-                print(f"Remaining game numbers left: {remainingGameNums}\n")
+                print(f"Remaining game numbers left: {remaining_game_nums}\n")
                 while True:
                     try:
-                        nextFinished = int(input("What game would you like to report finished?: "))
-                        remainingGameNums.index(nextFinished)
+                        next_finished = int(input("What game would you like to report finished?: "))
+                        remaining_game_nums.index(next_finished)
                         break
                     except ValueError:
                         print("Invalid game number")
 
-                gameIndex = 0
-                for game in gamesLeft:
-                    if game[0] == nextFinished:
-                        teamOne = game[1][2]
-                        teamTwo = game[2][2]
-                        teamOneScore = int(input(f"What is the score for {game[1][2].name}?: "))
-                        teamTwoScore = int(input(f"What is the score for {game[2][2].name}?: "))
-                        teamOneIDs = []
+                game_index = 0
+                for game in games_left:
+                    if game[0] == next_finished:
+                        team_one = game[1][2]
+                        team_two = game[2][2]
+                        team_one_score = int(input(f"What is the score for {game[1][2].name}?: "))
+                        team_two_score = int(input(f"What is the score for {game[2][2].name}?: "))
+                        team_one_IDs = []
                         # get player id's to pass to self.add_game()
-                        for player in teamOne.teamMembers:
-                            teamOneIDs.append(player.playerID)
-                        teamTwoIDs = []
-                        for player in teamTwo.teamMembers:
-                            teamTwoIDs.append(player.playerID)
+                        for player in team_one.team_members:
+                            team_one_IDs.append(player.playerID)
+                        team_two_IDs = []
+                        for player in team_two.team_members:
+                            team_two_IDs.append(player.playerID)
 
-                        self.add_game(teamOneIDs, teamTwoIDs, teamOneScore, teamTwoScore)
-                        if teamOneScore > teamTwoScore:
+                        self.add_game(team_one_IDs, team_two_IDs, team_one_score, team_two_score)
+                        if team_one_score > team_two_score:
                             advancers.append(game[1])
                         else:
                             advancers.append(game[2])
-                        gamesLeft.pop(gameIndex)
-                    gameIndex += 1
+                        games_left.pop(game_index)
+                    game_index += 1
             sorted_teams = advancers
 
         print(f"\nThe winner(s) of this tournament are {advancers[0][2].name}. Congratulations!")

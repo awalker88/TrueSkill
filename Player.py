@@ -95,3 +95,24 @@ class Player:
                 self.longest_losing_streak = self.current_losing_streak
         else:
             self.draws += 1
+
+    def reset_stats(self, new_skill: Rating):
+        self.wins = 0
+        self.losses = 0
+        self.draws = 0
+        self.games_played = 0
+        self.skill = new_skill
+        self.ranking_score = round(self.skill.mu - (3 * self.skill.sigma), 2)
+        self.mu_history = []
+        self.sigma_history = []
+        dt = datetime.now()
+        formatted_month = '%02d' % dt.month
+        self.skill_history = {f'{dt.year}-{formatted_month}-{dt.day}': self.ranking_score}
+        self.current_winning_streak = 0
+        self.current_losing_streak = 0
+        self.longest_winning_streak = 0
+        self.longest_losing_streak = 0
+        self.points_scored = 0
+        self.points_lost = 0
+        self.average_ppg = 0
+        self.average_point_margin = 0

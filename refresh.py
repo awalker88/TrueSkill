@@ -27,8 +27,7 @@ game_list_ss: pyg.Worksheet = workbook.worksheet_by_title('Game List')
 sheets_interface.add_new_players(playerID_responses_ss, h)
 
 # add new games
-new_games = sheets_interface.get_new_game_responses(game_responses_ss, h)
-sheets_interface.add_new_game_responses(new_games, h)
+new_games = sheets_interface.add_new_game_responses(game_responses_ss, h)
 
 # update Rankings page
 sheets_interface.update_rankings(rankings_ss, h, frc, lrc)
