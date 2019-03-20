@@ -101,7 +101,3 @@ class Game:
         else:
             print("team_num must be either 1 or 2")
             raise ValueError
-
-
-
-

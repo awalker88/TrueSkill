@@ -80,9 +80,9 @@ class History:
         for playerID in team_two:
             p_team_two.append(self.roster[playerID])
 
-        new_game = Game(p_team_one, p_team_two, team_one_score, team_two_score, self.current_season, notes)
+        new_game = Game(p_team_one, p_team_two, team_one_score, team_two_score, self.current_season, notes=notes)
         self.game_database[new_game.gameID] = new_game
-        pkl.dump(self.game_database, open(self.game_database_name, "wb"))  # update game_database pkl file after change
+        self.save_game_database()
 
         # update player wins/losses/draws
         for playerID in team_one:
@@ -110,7 +110,7 @@ class History:
             for player in team:
                 player.update_skill(team[player])
 
-        pkl.dump(self.roster, open(self.roster_name, "wb"))  # update roster pickle file after updating player skills
+        self.save_roster()  # update roster pickle file after updating player skills
 
         if not self.suppress_messages:
             print(f"Game with ID '{new_game.gameID}' added.")
@@ -129,7 +129,7 @@ class History:
             team_two = self.game_database[gameID].team_two
             winner = self.game_database[gameID].winner
             del self.game_database[gameID]
-            pkl.dump(self.game_database, open(self.game_database_name, "wb"))  # update pickle file after change
+            self.save_game_database()  # update pickle file after change
             # update player wins/losses
             for playerID in team_one + team_two:
                 if winner is None:
@@ -162,9 +162,9 @@ class History:
         Overwrites roster pickle file and then sets History's roster equal to empty roster pickle file
         :return: None
         """
-        empty_dict = {}
+        self.roster = {}
         empty_df = DataFrame([[]])
-        pkl.dump(empty_dict, open(self.roster_name, "wb"))
+        self.save_roster()
         pkl.dump(empty_df, open("previous_playerID_responses.pkl", "wb"))
         self.roster = pkl.load(open(self.roster_name, "rb"))
         self.num_players = len(self.roster)
@@ -206,9 +206,9 @@ class History:
         Overwrites game_database pkl file and then sets History's roster equal to empty roster pkl file
         :return: None
         """
-        empty_dict = {}
+        self.game_database = {}
         empty_df = DataFrame([[]])
-        pkl.dump(empty_dict, open(self.game_database_name, "wb"))
+        self.save_game_database()
         pkl.dump(empty_df, open("previous_game_responses.pkl", "wb"))
         self.game_database = pkl.load(open(self.game_database_name, "rb"))
         self.num_games = len(self.game_database)
