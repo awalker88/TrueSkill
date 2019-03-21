@@ -5,30 +5,21 @@ from trueskill import Rating
 
 class Player:
 
-    def __init__(self, name, skill, player_counter, playerID="", wins=0, losses=0, draws=0):
-        if playerID == "":
-            self.playerID = name.replace(" ", "") + str(player_counter)  # playerID is name plus their order in history
-        else:
-            self.playerID = playerID
+    def __init__(self, name, skill, player_counter):
+        self.playerID = name.replace(" ", "") + str(player_counter)  # playerID is name plus their order in history
         self.name = name
-        self.wins = wins
-        self.losses = losses
-        self.draws = draws
+        self.wins, self.losses, self.draws = 0, 0, 0
         self.games_played = self.wins + self.losses + self.draws
         self.skill = Rating(skill)
         self.ranking_score = round(self.skill.mu - (3 * self.skill.sigma), 2)
         self.timestamp = datetime.now()
-        self.mu_history = []
-        self.sigma_history = []
+        self.mu_history, self.sigma_history = [], []
         dt = datetime.now()
         formatted_month = '%02d' % dt.month
         self.skill_history = {f'{dt.year}-{formatted_month}-{dt.day}': self.ranking_score}
-        self.current_winning_streak = 0
-        self.current_losing_streak = 0
-        self.longest_winning_streak = 0
-        self.longest_losing_streak = 0
-        self.points_scored = 0
-        self.points_lost = 0
+        self.current_winning_streak, self.current_losing_streak = 0, 0
+        self.longest_winning_streak, self.longest_losing_streak = 0, 0
+        self.points_scored, self.points_lost = 0, 0
         if self.games_played == 0:
             self.average_ppg = 0
         else:

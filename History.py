@@ -30,36 +30,17 @@ class History:
         if len(self.roster) > 90:
             print("Warning! The google sheet might only be configured to have less than 100 players. Pls fix.")
 
-    def add_player(self, name, playerID="", wins=0, losses=0, draws=0):
+    def add_player(self, name):
         """
         :param name: string of first and last name
-        :param playerID: can be manually set, otherwise created in Player class
-        :param wins: can be manually set, otherwise created in Player class
-        :param losses: can be manually set, otherwise created in Player class
-        :param draws: can be manually set, otherwise created in Player class
         :return: None
         """
         skill = self.env.create_rating()
-        new_player = Player(name, skill, self.num_players + 1, playerID, wins, losses, draws)
+        new_player = Player(name, skill, self.num_players + 1)
         self.roster[new_player.playerID] = new_player
         self.num_players = len(self.roster)
-        pkl.dump(self.roster, open(self.roster_name, "wb"))  # update pickle file after change
+        self.save_roster()
         print(f'New player added: {new_player.name} ({new_player.playerID})')
-
-    def remove_player(self, playerID):
-        """
-        Searches roster for player with matching id, then removes them from dictionary and from pkl file
-        :param playerID: string
-        :return: True if successful, False otherwise
-        """
-        if self.roster[playerID] is not None:
-            del self.roster[playerID]
-            self.num_players = len(self.roster)
-            pkl.dump(self.roster, open(self.roster_name, "wb"))  # update pickle file after change
-            print(f"Player {playerID} removed.")
-            return True
-        print("Could not find player with ID:", playerID)
-        return False
 
     def add_game(self, team_one, team_two, team_one_score, team_two_score, timestamp=None, notes=''):
         """
@@ -119,32 +100,6 @@ class History:
 
         self.num_games = len(self.game_database)
 
-    def remove_game(self, gameID):
-        """
-        Finds game in game_database and deletes it, then updates players so they have one less win/loss/draw
-            IMPORTANT NOTE: This will not revert changes to players' skills or rating scores
-        :param gameID: string
-        :return: True if game is removed, False otherwise
-        """
-        if self.game_database[gameID] is not None:
-            team_one = self.game_database[gameID].team_one
-            team_two = self.game_database[gameID].team_two
-            winner = self.game_database[gameID].winner
-            del self.game_database[gameID]
-            self.save_game_database()  # update pickle file after change
-            # update player wins/losses
-            for playerID in team_one + team_two:
-                if winner is None:
-                    self.roster[playerID].draws -= 1
-                elif playerID in winner:
-                    self.roster[playerID].wins -= 1
-                else:
-                    self.roster[playerID].losses -= 1
-            return True
-        print("Could not find game with ID:", gameID)
-        self.num_games = len(self.game_database)
-        return False
-
     def print_roster(self):
         """
         Prints a nice table of every player in this history's database
@@ -158,26 +113,6 @@ class History:
             table.add_row([p.playerID, p.name, p.get_win_percentage(), round(p.skill.mu, 2), round(p.skill.sigma, 2),
                            round(p.ranking_score, 2), p.games_played])
         print(table)
-
-    def clear_roster(self):
-        """
-        Overwrites roster pickle file and then sets History's roster equal to empty roster pickle file
-        :return: None
-        """
-        self.roster = {}
-        empty_df = DataFrame([[]])
-        self.save_roster()
-        pkl.dump(empty_df, open("previous_playerID_responses.pkl", "wb"))
-        self.roster = pkl.load(open(self.roster_name, "rb"))
-        self.num_players = len(self.roster)
-        print("Roster cleared.\n")
-
-    def save_roster(self):
-        """
-        saves the current roster back to the roster pkl file
-        :return: None
-        """
-        pkl.dump(self.roster, open(self.roster_name, "wb"))
 
     def print_game_database(self):
         """
@@ -200,15 +135,26 @@ class History:
                 actual_winner = "Draw"
             table.add_row([gameID, g.get_team_name(g.team_one), g.get_team_name(g.team_two),
                            f"{g.team_one_score}-{g.team_two_score}", pred_winner, actual_winner])
-
         print(table)
+
+    def clear_roster(self):
+        """
+        Overwrites roster pickle file and then sets History's roster equal to empty roster pickle file
+        :return: None
+        """
+        self.roster = {}
+        empty_df = DataFrame([[]])
+        self.save_roster()
+        pkl.dump(empty_df, open("previous_playerID_responses.pkl", "wb"))
+        self.roster = pkl.load(open(self.roster_name, "rb"))
+        self.num_players = len(self.roster)
+        print("Roster cleared.\n")
 
     def clear_game_database(self):
         """
         Overwrites game_database pkl file and then sets History's roster equal to empty roster pkl file
         :return: None
         """
-        # TODO: make sure erases player wins and losses
         # clear game_database
         self.game_database = {}
         self.save_game_database()
@@ -223,6 +169,13 @@ class History:
         # clear previous responses
         pkl.dump(DataFrame([[]]), open("previous_game_responses.pkl", "wb"))
         print("previous_game_responses.pkl cleared\n")
+
+    def save_roster(self):
+        """
+        saves the current roster back to the roster pkl file
+        :return: None
+        """
+        pkl.dump(self.roster, open(self.roster_name, "wb"))
 
     def save_game_database(self):
         """

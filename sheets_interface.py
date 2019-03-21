@@ -5,11 +5,13 @@ from os import getcwd, listdir
 from time import sleep
 from datetime import date, timedelta
 from prettytable import PrettyTable
+from fuzzywuzzy import fuzz
+
 
 # TODO: add ability to specify date when submitting game
 
 
-def add_new_game_responses(game_responses_ss, history):
+def add_new_game_responses(game_responses_ss: pyg.Worksheet, history):
     """ Pulls all responses from sheet, figures out which ones are new, and returns them formatted for adding to History
     :param game_responses_ss: worksheet to pull responses from
     :param history: History class containing your roster
@@ -44,13 +46,32 @@ def add_new_game_responses(game_responses_ss, history):
                                       submission[0],  # timestamp
                                       submission[5]]  # notes
 
+        # # collect all playerIDs from new submissions
+        # playerIDs_from_new_submissions = []
+        # for submission in new_submissions:
+        #     for playerID in submission[0] + submission[1]:
+        #         playerIDs_from_new_submissions.append(playerID)
+        # # check each one is valid
+        # for playerID in playerIDs_from_new_submissions:
+        #     if playerID not in history.roster:
+        #
+        # ask about which ones aren't and replace them with suggestion here and back on google sheet
+
         # print out players if playerID not in roster
+        possible_playerIDs = [key for key in history.roster]
         is_new_player = False
         for submission in new_submissions:
-            for playerID in submission[0] + submission[1]:
-                if playerID not in history.roster:
+            # check team one player IDs
+            for counter, playerID in enumerate(submission[0]):
+                if playerID not in possible_playerIDs:
                     print(f"Could not find player with ID: {playerID}")
-                    is_new_player = True
+                    top_match = fuzzy_match(possible_playerIDs, playerID)
+                    is_match = input(f'Did you by chance mean {top_match}? (y/n): ')
+                    if is_match.lower() == 'y':
+                        submission[0][counter] = top_match
+                        game_responses_ss.replace(playerID, replacement=top_match, matchEntireCell=True, matchCase=True)
+                    else:
+                        is_new_player = True
         if is_new_player:
             print("\nPlease add new players to the roster or delete games with unknown players and re-run.\n")
             sleep(0.5)  # makes error message look better
@@ -66,7 +87,7 @@ def add_new_game_responses(game_responses_ss, history):
         # now that we know everyone is in the system, add the games
         for submission in new_submissions:
             get = input(f'\nDo you want to add {submission[0]} ({submission[2]}) vs. {submission[1]} ({submission[3]}) '
-                        f'(submitted: {submission[4]})? (y/n)?')
+                        f'(submitted: {submission[4]})? (y/n): ')
             if get.lower() == 'y':
                 history.add_game(team_one=submission[0], team_two=submission[1], team_one_score=submission[2],
                                  team_two_score=submission[3], timestamp=submission[4], notes=submission[5])
@@ -280,3 +301,20 @@ def update_game_list(game_list_sheet, history):
         formatted.append([game.timestamp, game.get_team_name(1), game.get_team_name(2), game.team_one_score,
                           game.team_two_score])
     game_list_sheet.update_values('A1', formatted)
+
+
+def fuzzy_match(possible_values: list, given_value: str):
+    """
+
+    :param possible_values:
+    :param given_value:
+    :return:
+    """
+    best_match = (0, '')
+
+    for value in possible_values:
+        ratio = fuzz.ratio(value.lower(), given_value.lower())
+        if ratio > best_match[0]:
+            best_match = (ratio, value)
+
+    return best_match[1]
