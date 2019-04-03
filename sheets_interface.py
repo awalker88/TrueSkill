@@ -69,7 +69,7 @@ def add_new_game_responses(game_responses_ss: pyg.Worksheet, history):
                     is_match = input(f'Did you by chance mean {top_match}? (y/n): ')
                     if is_match.lower() == 'y':
                         submission[0][counter] = top_match
-                        game_responses_ss.replace(playerID, replacement=top_match, matchEntireCell=True, matchCase=True)
+                        game_responses_ss.replace(playerID, replacement=top_match, matchCase=True)
                     else:
                         is_new_player = True
         if is_new_player:
@@ -223,7 +223,7 @@ def update_champions_list(champions_ss, rankings_ss, first_rankings_cell, last_r
     current = current[current.week != '']  # remove blank rows
     latest_week = current['week'][len(current)]
     split = latest_week.split("/")
-    latest_week = date(int(split[2]), int(split[0]), int(split[1]))  # note: have to modify after the year 2099
+    latest_week = date(int(split[2]), int(split[0]), int(split[1]))  # note: have to modify after the year 2099 :)
     # check we need to crown a champion
     if (date.today() - latest_week).days >= 7:
         no_players = False
@@ -233,7 +233,7 @@ def update_champions_list(champions_ss, rankings_ss, first_rankings_cell, last_r
             no_players = True
             print('No players in Rankings sheet. No champion.')
 
-        if int(rankings_ss.get_value(last_rankings_cell)) == 0:
+        if float(rankings_ss.get_value(last_rankings_cell)) == 0.:
             print('Top player has not played any games. No champion.')
             top_player_is_zero = True
 
