@@ -3,6 +3,8 @@ from History import History
 from datetime import date, datetime
 import sheets_interface
 
+# TODO: ensure that handles case of two champions being added between refreshes is handled properly
+# TODO: have start date for skill history be moved to 3/20
 
 # configuration
 h = History()
@@ -33,7 +35,7 @@ new_games = sheets_interface.add_new_game_responses(game_responses_ss, h)
 sheets_interface.update_rankings(rankings_ss, h, frc, lrc)
 
 # update Skill History page
-sheets_interface.update_skill_history(skill_history_ss, date(2019, 3, 11), h)
+sheets_interface.update_skill_history(skill_history_ss, date(2019, 3, 19), h)
 
 # update Champions page
 sheets_interface.update_champions_list(champion_ss, rankings_ss, frc, lrc)
