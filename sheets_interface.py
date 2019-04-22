@@ -2,13 +2,8 @@ import pygsheets as pyg
 import pandas as pd
 import pickle as pkl
 from os import getcwd, listdir
-from time import sleep
 from datetime import date, timedelta
 from prettytable import PrettyTable
-from fuzzywuzzy import fuzz
-
-
-# TODO: add ability to specify date when submitting game
 
 
 def add_new_game_responses(game_responses_ss: pyg.Worksheet, history):
@@ -45,37 +40,6 @@ def add_new_game_responses(game_responses_ss: pyg.Worksheet, history):
                                       int(submission[4]),  # team two score
                                       submission[0],  # timestamp
                                       submission[5]]  # notes
-
-        # # collect all playerIDs from new submissions
-        # playerIDs_from_new_submissions = []
-        # for submission in new_submissions:
-        #     for playerID in submission[0] + submission[1]:
-        #         playerIDs_from_new_submissions.append(playerID)
-        # # check each one is valid
-        # for playerID in playerIDs_from_new_submissions:
-        #     if playerID not in history.roster:
-        #
-        # ask about which ones aren't and replace them with suggestion here and back on google sheet
-
-        # print out players if playerID not in roster
-        possible_playerIDs = [key for key in history.roster]
-        is_new_player = False
-        for submission in new_submissions:
-            # check team one player IDs
-            for counter, playerID in enumerate(submission[0]):
-                if playerID not in possible_playerIDs:
-                    print(f"Could not find player with ID: {playerID}")
-                    top_match = fuzzy_match(possible_playerIDs, playerID)
-                    is_match = input(f'Did you by chance mean {top_match}? (y/n): ')
-                    if is_match.lower() == 'y':
-                        submission[0][counter] = top_match
-                        game_responses_ss.replace(playerID, replacement=top_match, matchCase=True)
-                    else:
-                        is_new_player = True
-        if is_new_player:
-            print("\nPlease add new players to the roster or delete games with unknown players and re-run.\n")
-            sleep(0.5)  # makes error message look better
-            raise KeyError
 
         # potential new games
         table = PrettyTable(field_names=['Team One', 'Team Two', 'Team One Score', 'Team Two Score', 'Timestamp'])
@@ -258,7 +222,7 @@ def update_player_list(player_list_ss: pyg.Worksheet, h):
     :param h: History class with roster of players
     :return: None
     """
-    roster_list = [['PlayerID', 'Name', 'Win Rate', 'Wins', 'Losses', 'Draws', 'Games Played',
+    roster_list = [['PlayerID', 'Name', 'Win Rate', 'Games Played', 'Wins', 'Losses', 'Draws',
                     'Rating Score', 'Points Scored', 'Points Lost', 'Average Points Per Game', 'Average Point Margin',
                     'Current Winning Streak', 'Longest Winning Streak', 'Current Losing Streak',
                     'Longest Losing Streak']]
@@ -266,10 +230,10 @@ def update_player_list(player_list_ss: pyg.Worksheet, h):
         roster_list.append([playerID,
                             h.roster[playerID].name,
                             h.roster[playerID].get_win_percentage(),
+                            h.roster[playerID].games_played,
                             h.roster[playerID].wins,
                             h.roster[playerID].losses,
                             h.roster[playerID].draws,
-                            h.roster[playerID].games_played,
                             h.roster[playerID].ranking_score,
                             h.roster[playerID].points_scored,
                             h.roster[playerID].points_lost,
@@ -278,8 +242,7 @@ def update_player_list(player_list_ss: pyg.Worksheet, h):
                             h.roster[playerID].current_winning_streak,
                             h.roster[playerID].longest_winning_streak,
                             h.roster[playerID].current_losing_streak,
-                            h.roster[playerID].longest_losing_streak
-                            ])
+                            h.roster[playerID].longest_losing_streak])
     player_list_ss.clear('A1', 'P101')
     player_list_ss.update_values('A1', roster_list)
 
@@ -301,20 +264,3 @@ def update_game_list(game_list_sheet, history):
         formatted.append([game.timestamp, game.get_team_name(1), game.get_team_name(2), game.team_one_score,
                           game.team_two_score])
     game_list_sheet.update_values('A1', formatted)
-
-
-def fuzzy_match(possible_values: list, given_value: str):
-    """
-
-    :param possible_values:
-    :param given_value:
-    :return:
-    """
-    best_match = (0, '')
-
-    for value in possible_values:
-        ratio = fuzz.ratio(value.lower(), given_value.lower())
-        if ratio > best_match[0]:
-            best_match = (ratio, value)
-
-    return best_match[1]
