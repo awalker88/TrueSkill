@@ -1,8 +1,4 @@
 from History import History
-from random import randint
-import pickle as pkl
-import pandas as pd
-
 
 h = History()
 h.clear_game_database()
@@ -47,17 +43,17 @@ h.clear_game_database()
 #     h.print_game_database()
 #     h.print_roster()
 #
-#     h.roster['andrew01'].skill_history['2019-03-11'] = 300
-#     h.roster['andrew01'].skill_history['2019-03-12'] = 400
-#     h.roster['andrew01'].skill_history['2019-03-13'] = 600
-#     print(h.roster['andrew01'].skill_history)
+#     h.roster['andrew01'].skill_by_day['2019-03-11'] = 300
+#     h.roster['andrew01'].skill_by_day['2019-03-12'] = 400
+#     h.roster['andrew01'].skill_by_day['2019-03-13'] = 600
+#     print(h.roster['andrew01'].skill_by_day)
 #
-#     h.roster['erin01'].skill_history['2019-03-11'] = 200
-#     h.roster['erin01'].skill_history['2019-03-12'] = 500
-#     h.roster['erin01'].skill_history['2019-03-13'] = 900
+#     h.roster['erin01'].skill_by_day['2019-03-11'] = 200
+#     h.roster['erin01'].skill_by_day['2019-03-12'] = 500
+#     h.roster['erin01'].skill_by_day['2019-03-13'] = 900
 #
-#     h.roster['abed01'].skill_history['2019-03-11'] = 700
-#     h.roster['abed01'].skill_history['2019-03-13'] = 750
+#     h.roster['abed01'].skill_by_day['2019-03-11'] = 700
+#     h.roster['abed01'].skill_by_day['2019-03-13'] = 750
 #
 #     pkl.dump(h.roster, open(h.roster_name, "wb"))
 #

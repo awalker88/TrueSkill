@@ -1,12 +1,13 @@
-import pygsheets as pyg
-import pandas as pd
 import pickle as pkl
-from os import getcwd, listdir
 from datetime import date, timedelta
+from os import getcwd, listdir
+
+import pandas as pd
+import pygsheets as pyg
 from prettytable import PrettyTable
 
 
-def add_new_game_responses(game_responses_ss: pyg.Worksheet, history):
+def add_new_game_responses(game_responses_ss: pyg.Worksheet, history, ask_to_add=True):
     """ Pulls all responses from sheet, figures out which ones are new, and returns them formatted for adding to History
     :param game_responses_ss: worksheet to pull responses from
     :param history: History class containing your roster
@@ -42,17 +43,22 @@ def add_new_game_responses(game_responses_ss: pyg.Worksheet, history):
                                       submission[5]]  # notes
 
         # potential new games
-        table = PrettyTable(field_names=['Team One', 'Team Two', 'Team One Score', 'Team Two Score', 'Timestamp'])
-        for submission in new_submissions:
-            table.add_row([submission[0], submission[1], submission[2], submission[3], submission[4]])
-        print(f"Potential {len(new_submissions)} new game(s)")
-        print(table)
+        if ask_to_add:
+            table = PrettyTable(field_names=['Team One', 'Team Two', 'Team One Score', 'Team Two Score', 'Timestamp'])
+            for submission in new_submissions:
+                table.add_row([submission[0], submission[1], submission[2], submission[3], submission[4]])
+            print(f"Potential {len(new_submissions)} new game(s)")
+            print(table)
 
         # now that we know everyone is in the system, add the games
         for submission in new_submissions:
-            get = input(f'\nDo you want to add {submission[0]} ({submission[2]}) vs. {submission[1]} ({submission[3]}) '
-                        f'(submitted: {submission[4]})? (y/n): ')
-            if get.lower() == 'y':
+            if ask_to_add:
+                get = input(f'\nDo you want to add {submission[0]} ({submission[2]}) vs. {submission[1]} ({submission[3]}) '
+                            f'(submitted: {submission[4]})? (y/n): ')
+                if get.lower() == 'y':
+                    history.add_game(team_one=submission[0], team_two=submission[1], team_one_score=submission[2],
+                                     team_two_score=submission[3], timestamp=submission[4], notes=submission[5])
+            else:
                 history.add_game(team_one=submission[0], team_two=submission[1], team_one_score=submission[2],
                                  team_two_score=submission[3], timestamp=submission[4], notes=submission[5])
 
@@ -62,7 +68,7 @@ def add_new_game_responses(game_responses_ss: pyg.Worksheet, history):
         pkl.dump(combined, open('previous_game_responses.pkl', 'wb'))
 
 
-def add_new_players(player_responses_ss, history):
+def add_new_players(player_responses_ss: pyg.Worksheet, history, ask_to_add=True):
     """
     Retrieves and checks new playerID requests
     :param player_responses_ss:
@@ -86,16 +92,19 @@ def add_new_players(player_responses_ss, history):
     if len(new_submissions) == 0:
         print("No new players")
     else:
-        print("Current roster:")
-        history.print_roster()
+        if ask_to_add:
+            print("Current roster:")
+            history.print_roster()
         for submission in new_submissions.values:
             # see if anyone else in the roster has that exact name
             for playerID in history.roster:
                 if history.roster[playerID].name == submission[1]:
                     print(f"\nThere is already a player with name {submission[1]}, make sure it's not duplicate.")
-            #
-            get = input(f'\nDo you want to add {submission[1]} (submitted: {submission[0]})? (y/n)?')
-            if get.lower() == 'y':
+            if ask_to_add:
+                get = input(f'\nDo you want to add {submission[1]} (submitted: {submission[0]})? (y/n)?')
+                if get.lower() == 'y':
+                    history.add_player(submission[1])
+            else:
                 history.add_player(submission[1])
 
     combined = pd.concat([current, previous], ignore_index=True, sort=False)
@@ -103,18 +112,18 @@ def add_new_players(player_responses_ss, history):
     pkl.dump(combined, open('previous_playerID_responses.pkl', 'wb'))
 
 
-def update_rankings(rankings_ss, h, first_rankings_cell, last_rankings_cell):
+def update_rankings(rankings_ss: pyg.Worksheet, history, first_rankings_cell, last_rankings_cell):
     """
     Gets top players in a history's roster and updates the ranking table in rankings_ss
     :param rankings_ss: google sheet with rankings table
-    :param h: History class with roster you want to pull from
+    :param history: History class with roster you want to pull from
     :param first_rankings_cell: top left cell of your rankings table
     :param last_rankings_cell: top right cell of your rankings table
     :return:
     """
     ranking_list = []
-    for playerID in h.roster:
-        player = h.roster[playerID]
+    for playerID in history.roster:
+        player = history.roster[playerID]
         ranking_list.append([player.ranking_score, player.name, player.playerID])
 
     ranking_list.sort()
@@ -130,12 +139,12 @@ def update_rankings(rankings_ss, h, first_rankings_cell, last_rankings_cell):
     rankings_ss.update_values(first_rankings_cell, ranking_list)  # TODO: Fix when there are no players and rl is empty
 
 
-def update_skill_history(skill_history_ss, start_date, h):
+def update_skill_by_day(skill_by_day_ss: pyg.Worksheet, start_date, history):
     """
     updates skill history sheet with new dates and players
-    :param skill_history_ss: google sheet to update
+    :param skill_by_day_ss: google sheet to update
     :param start_date: date you want to first track skill history from
-    :param h: History class containing players and games
+    :param history: History class containing players and games
     :return: None
     """
     base = date.today()
@@ -146,29 +155,32 @@ def update_skill_history(skill_history_ss, start_date, h):
         date_header.append(str(start_date + timedelta(i)))
 
     date_df = pd.DataFrame(columns=date_header)
-    date_df['playerID'] = [h.roster[key].playerID for key in h.roster]
+    date_df['playerID'] = [history.roster[key].playerID for key in history.roster]
 
     date_header.pop(0)  # removes playerID column so it's just dates again
     # loop through and add skill for that day if it exists, else repeat the previous date's skill
     for index in range(len(date_df)):
         playerID = date_df['playerID'][index]
-        player = h.roster[playerID]
+        player = history.roster[playerID]
         # all players start at 0 until their first non-zero ranking score, then their latest is... their latest
         # this way the graph will look consistent across time even if players don't play every day
         latest_ranking = 0
         for col in date_header:
-            if col in player.skill_history:
-                date_df[col][index] = player.skill_history[col]
-                latest_ranking = player.skill_history[col]
+            if col in player.skill_by_day:
+                date_df[col][index] = player.skill_by_day[col]
+                latest_ranking = player.skill_by_day[col]
             else:
                 date_df[col][index] = latest_ranking
 
-    skill_history_ss.clear()
-    skill_history_ss.update_values('A1', [date_df.columns.values.tolist()])
-    skill_history_ss.update_values('A2', date_df.values.tolist())
+    skill_by_day_ss.clear()
+    skill_by_day_ss.update_values('A1', [date_df.columns.values.tolist()])
+    skill_by_day_ss.update_values('A2', date_df.values.tolist())
 
 
-def update_champions_list(champions_ss, rankings_ss, first_rankings_cell, last_rankings_cell):
+def update_skill_by_game(skill_by_game_ss: pyg.Worksheet, history):
+    pass
+
+def update_champions_list(champions_ss: pyg.Worksheet, rankings_ss, first_rankings_cell, last_rankings_cell):
     """
     if date when run is 7 or more days since latest entry in Previous Champions sheet, adds champion based on current
     champion
@@ -215,34 +227,36 @@ def update_champions_list(champions_ss, rankings_ss, first_rankings_cell, last_r
         print("Not time for a new champion yet.")
 
 
-def update_player_list(player_list_ss: pyg.Worksheet, h):
+def update_player_list(player_list_ss: pyg.Worksheet, history):
     """
 
     :param player_list_ss: google sheet you want to update
-    :param h: History class with roster of players
+    :param history: History class with roster of players
     :return: None
     """
     roster_list = [['PlayerID', 'Name', 'Win Rate', 'Games Played', 'Wins', 'Losses', 'Draws',
-                    'Rating Score', 'Points Scored', 'Points Lost', 'Average Points Per Game', 'Average Point Margin',
-                    'Current Winning Streak', 'Longest Winning Streak', 'Current Losing Streak',
-                    'Longest Losing Streak']]
-    for playerID in h.roster:
+                    'Rating Score', 'Raw Skill', 'Uncertainty', 'Points Scored', 'Points Lost',
+                    'Average Points Per Game', 'Average Point Margin', 'Current Winning Streak',
+                    'Longest Winning Streak', 'Current Losing Streak', 'Longest Losing Streak']]
+    for playerID in history.roster:
         roster_list.append([playerID,
-                            h.roster[playerID].name,
-                            h.roster[playerID].get_win_percentage(),
-                            h.roster[playerID].games_played,
-                            h.roster[playerID].wins,
-                            h.roster[playerID].losses,
-                            h.roster[playerID].draws,
-                            h.roster[playerID].ranking_score,
-                            h.roster[playerID].points_scored,
-                            h.roster[playerID].points_lost,
-                            h.roster[playerID].average_ppg,
-                            h.roster[playerID].average_point_margin,
-                            h.roster[playerID].current_winning_streak,
-                            h.roster[playerID].longest_winning_streak,
-                            h.roster[playerID].current_losing_streak,
-                            h.roster[playerID].longest_losing_streak])
+                            history.roster[playerID].name,
+                            history.roster[playerID].get_win_percentage(),
+                            history.roster[playerID].games_played,
+                            history.roster[playerID].wins,
+                            history.roster[playerID].losses,
+                            history.roster[playerID].draws,
+                            history.roster[playerID].ranking_score,
+                            round(history.roster[playerID].skill.mu, 2),
+                            round(history.roster[playerID].skill.sigma, 2),
+                            history.roster[playerID].points_scored,
+                            history.roster[playerID].points_lost,
+                            history.roster[playerID].average_ppg,
+                            history.roster[playerID].average_point_margin,
+                            history.roster[playerID].current_winning_streak,
+                            history.roster[playerID].longest_winning_streak,
+                            history.roster[playerID].current_losing_streak,
+                            history.roster[playerID].longest_losing_streak])
     player_list_ss.clear('A1', 'P101')
     player_list_ss.update_values('A1', roster_list)
 
@@ -258,9 +272,9 @@ def update_game_list(game_list_sheet, history):
 
     game_list_sheet.clear()
 
-    formatted = [['Timestamp', 'Team One', 'Team Two', 'Team One Score', 'Team Two Score']]
+    formatted = [['Timestamp', 'Team One', 'Team Two', 'Team One Score', 'Team Two Score', 'Team One Win Probability']]
     for game_key in game_database:
         game = game_database[game_key]
         formatted.append([game.timestamp, game.get_team_name(1), game.get_team_name(2), game.team_one_score,
-                          game.team_two_score])
+                          game.team_two_score, round(game.t1_win_prob / 100, 4)])
     game_list_sheet.update_values('A1', formatted)

@@ -1,5 +1,3 @@
-"""Contains info about a single player."""
-from datetime import datetime
 from trueskill import Rating
 
 
@@ -12,11 +10,9 @@ class Player:
         self.games_played = self.wins + self.losses + self.draws
         self.skill = Rating(skill)
         self.ranking_score = round(self.skill.mu - (3 * self.skill.sigma), 2)
-        self.timestamp = datetime.now()
         self.mu_history, self.sigma_history = [], []
-        dt = datetime.now()
-        formatted_month = '%02d' % dt.month
-        self.skill_history = {f'{dt.year}-{formatted_month}-{dt.day}': self.ranking_score}
+        self.skill_by_day = {}
+        self.skill_by_game = [self.ranking_score]
         self.current_winning_streak, self.current_losing_streak = 0, 0
         self.longest_winning_streak, self.longest_losing_streak = 0, 0
         self.points_scored, self.points_lost = 0, 0
@@ -46,9 +42,9 @@ class Player:
         else:
             return str(round(100*self.wins / (self.wins + self.losses), 2)) + "%"
 
-    def update_skill(self, new_skill: Rating):
+    def update_skill(self, new_skill: Rating, timestamp: str):
         """
-        Refreshes player skill rating and adds old skill rating to this player's skill_history
+        Refreshes player skill rating and adds old skill rating to this player's skill_by_day
         :param new_skill: new Rating object
         :return: None
         """
@@ -56,9 +52,13 @@ class Player:
         self.sigma_history.append(self.skill.sigma)
         self.skill = Rating(new_skill)
         self.ranking_score = round(self.skill.mu - (3 * self.skill.sigma), 2)
-        dt = datetime.now()
-        formatted_month = '%02d' % dt.month
-        self.skill_history[f'{dt.year}-{formatted_month}-{dt.day}'] = self.ranking_score
+        self.skill_by_game.append(self.ranking_score)
+        timestamp = timestamp.split(' ')
+        date = timestamp[0]
+        date = date.split('/')
+        if len(date[0]) == 1:
+            date[0] = '0' + date[0]  # checks that month is always two digits
+        self.skill_by_day[f'{date[2]}-{date[0]}-{date[1]}'] = self.ranking_score
 
     def update_stats_after_game(self, players_score: int, opponents_score: int):
         """
@@ -96,9 +96,8 @@ class Player:
         self.ranking_score = round(self.skill.mu - (3 * self.skill.sigma), 2)
         self.mu_history = []
         self.sigma_history = []
-        dt = datetime.now()
-        formatted_month = '%02d' % dt.month
-        self.skill_history = {f'{dt.year}-{formatted_month}-{dt.day}': self.ranking_score}
+        self.skill_by_day = {}
+        self.skill_by_game = [self.ranking_score]
         self.current_winning_streak = 0
         self.current_losing_streak = 0
         self.longest_winning_streak = 0

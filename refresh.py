@@ -1,16 +1,17 @@
-import pygsheets as pyg
-from History import History
 from datetime import date, datetime
+
+import pygsheets as pyg
+
 import sheets_interface
+from History import History
 
 # TODO: ensure that handles case of two champions being added between refreshes is handled properly
 # TODO: have start date for skill history be moved to 3/20
+# TODO: add ability to remove a player
 
 # configuration
-h = History()
 spreadsheet_name = 'IBM Rochester Ping Pong'
 frc = 'C3'  # change if rankings table is moved
-lrc = 'F' + str((2 + len(h.roster)))
 update_time_cell = 'H15'  # cell that contains time of the last refresh
 
 # connect to worksheets
@@ -22,8 +23,16 @@ champion_ss: pyg.Worksheet = workbook.worksheet_by_title('Weekly Champions')
 player_list_ss: pyg.Worksheet = workbook.worksheet_by_title('Player List')
 game_responses_ss: pyg.Worksheet = workbook.worksheet_by_title('Game Responses')
 playerID_responses_ss: pyg.Worksheet = workbook.worksheet_by_title('Player ID Responses')
-skill_history_ss: pyg.Worksheet = workbook.worksheet_by_title('Skill History')
+skill_by_day_ss: pyg.Worksheet = workbook.worksheet_by_title('Skill By Day')
 game_list_ss: pyg.Worksheet = workbook.worksheet_by_title('Game List')
+
+h = History()
+h.clear_roster()
+h.clear_game_database()
+sheets_interface.add_new_players(playerID_responses_ss, h, ask_to_add=False)
+sheets_interface.add_new_game_responses(game_responses_ss, h, ask_to_add=False)
+
+lrc = 'F' + str((2 + len(h.roster)))
 
 # add new players
 sheets_interface.add_new_players(playerID_responses_ss, h)
@@ -35,7 +44,7 @@ new_games = sheets_interface.add_new_game_responses(game_responses_ss, h)
 sheets_interface.update_rankings(rankings_ss, h, frc, lrc)
 
 # update Skill History page
-sheets_interface.update_skill_history(skill_history_ss, date(2019, 3, 19), h)
+sheets_interface.update_skill_by_day(skill_by_day_ss, date(2019, 3, 19), h)
 
 # update Champions page
 sheets_interface.update_champions_list(champion_ss, rankings_ss, frc, lrc)

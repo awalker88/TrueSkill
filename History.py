@@ -1,12 +1,13 @@
 import pickle as pkl
 from random import shuffle
-from math import ceil, log2
-import trueskill as ts
-from prettytable import PrettyTable
-from pandas import DataFrame
 
-from Player import Player
+import trueskill as ts
+from math import ceil, log2
+from pandas import DataFrame
+from prettytable import PrettyTable
+
 from Game import Game
+from Player import Player
 from TournamentTeam import TournamentTeam
 
 
@@ -19,7 +20,7 @@ class History:
         self.num_players = len(self.roster)
         self.num_games = len(self.game_database)
         self.current_season = 1  # TODO: Add support for soft reset of ranks with seasons
-        self.suppress_messages = False
+        self.verbose = False
 
         MU = 1000.
         SIGMA = MU / 3
@@ -40,7 +41,8 @@ class History:
         self.roster[new_player.playerID] = new_player
         self.num_players = len(self.roster)
         self.save_roster()
-        print(f'New player added: {new_player.name} ({new_player.playerID})')
+        if self.verbose:
+            print(f'New player added: {new_player.name} ({new_player.playerID})')
 
     def add_game(self, team_one, team_two, team_one_score, team_two_score, timestamp=None, notes=''):
         """
@@ -62,7 +64,7 @@ class History:
         for playerID in team_two:
             p_team_two.append(self.roster[playerID])
 
-        new_game = Game(p_team_one, p_team_two, team_one_score, team_two_score, self.current_season,
+        new_game = Game(p_team_one, p_team_two, team_one_score, team_two_score, self.current_season, self.env.beta,
                         timestamp=timestamp, notes=notes)
         self.game_database[new_game.gameID] = new_game
         self.save_game_database()
@@ -85,17 +87,30 @@ class History:
         rating_groups.append(team_two_skill_dict)
 
         # update skills for players
-        if new_game.winner == p_team_one:
-            rating_groups = ts.rate(rating_groups, [0, 1])
+        if (team_one_score + team_two_score > 42) and (abs(team_one_score - team_two_score) <= 2):
+            # count as a draw (for skill updating) if the score had to go more than 22-20, as players are likely
+            # similar if it was that close
+            rating_groups = self.env.rate(rating_groups, [0, 0])
+        elif new_game.winner == p_team_one:
+            rating_groups = self.env.rate(rating_groups, [0, 1])
         else:
-            rating_groups = ts.rate(rating_groups, [1, 0])
+            rating_groups = self.env.rate(rating_groups, [1, 0])
         for team in rating_groups:
             for player in team:
-                player.update_skill(team[player])
+                player.update_skill(team[player], timestamp)
+
+        # get team skills
+        for team in rating_groups:
+            mu = 0.
+            sigma = 0.
+            for player in team:
+                mu += player.skill.mu
+                sigma += player.skill.sigma
+                new_game.team_skills_after_game.append(ts.Rating(mu / len(team), sigma / len(team)))
 
         self.save_roster()  # update roster pickle file after updating player skills
 
-        if not self.suppress_messages:
+        if self.verbose:
             print(f"Game with ID '{new_game.gameID}' added.")
 
         self.num_games = len(self.game_database)
@@ -105,6 +120,9 @@ class History:
         Prints a nice table of every player in this history's database
         :return:
         """
+        if len(self.game_database) == 0:
+            print('No players in roster')
+            exit()
         table = PrettyTable()
         table.field_names = ['Player ID', 'Name', 'Win Rate', 'Skill Mean', 'Skill Variance', 'Ranking Score',
                              'Games Played']
@@ -119,6 +137,9 @@ class History:
         Prints a nice table of every game in this history's database
         :return: None
         """
+        if len(self.game_database) == 0:
+            print('No games in database')
+            exit()
         table = PrettyTable()
         table.field_names = ['Game ID', 'Team One', 'Team Two', 'Score', 'Predicted Winner', 'Actual Winner']
         for gameID in self.game_database:
@@ -148,7 +169,7 @@ class History:
         pkl.dump(empty_df, open("previous_playerID_responses.pkl", "wb"))
         self.roster = pkl.load(open(self.roster_name, "rb"))
         self.num_players = len(self.roster)
-        print("Roster cleared.\n")
+        print("Roster cleared.")
 
     def clear_game_database(self):
         """
@@ -159,7 +180,7 @@ class History:
         self.game_database = {}
         self.save_game_database()
         self.num_games = len(self.game_database)
-        print("\nGame Database cleared.")
+        print("Game Database cleared.")
 
         # reset player stats
         for playerID in self.roster:
@@ -168,7 +189,7 @@ class History:
 
         # clear previous responses
         pkl.dump(DataFrame([[]]), open("previous_game_responses.pkl", "wb"))
-        print("previous_game_responses.pkl cleared\n")
+        print("previous_game_responses.pkl cleared.")
 
     def save_roster(self):
         """
