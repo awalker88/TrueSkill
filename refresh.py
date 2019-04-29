@@ -24,6 +24,7 @@ player_list_ss: pyg.Worksheet = workbook.worksheet_by_title('Player List')
 game_responses_ss: pyg.Worksheet = workbook.worksheet_by_title('Game Responses')
 playerID_responses_ss: pyg.Worksheet = workbook.worksheet_by_title('Player ID Responses')
 skill_by_day_ss: pyg.Worksheet = workbook.worksheet_by_title('Skill By Day')
+skill_by_game_ss: pyg.Worksheet = workbook.worksheet_by_title('Skill By Game')
 game_list_ss: pyg.Worksheet = workbook.worksheet_by_title('Game List')
 
 h = History()
@@ -43,8 +44,11 @@ new_games = sheets_interface.add_new_game_responses(game_responses_ss, h)
 # update Rankings page
 sheets_interface.update_rankings(rankings_ss, h, frc, lrc)
 
-# update Skill History page
+# update Skill By Day page
 sheets_interface.update_skill_by_day(skill_by_day_ss, date(2019, 3, 19), h)
+
+# update Skill By Game page
+sheets_interface.update_skill_by_game(skill_by_game_ss, h)
 
 # update Champions page
 sheets_interface.update_champions_list(champion_ss, rankings_ss, frc, lrc)

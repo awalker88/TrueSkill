@@ -178,7 +178,27 @@ def update_skill_by_day(skill_by_day_ss: pyg.Worksheet, start_date, history):
 
 
 def update_skill_by_game(skill_by_game_ss: pyg.Worksheet, history):
-    pass
+    player_list = []
+    max_games = 0
+    header = ['playerID']
+    for playerID in history.roster:
+        skill_by_game = history.roster[playerID].skill_by_game
+        if len(skill_by_game) > max_games:
+            max_games = len(skill_by_game)
+
+        # want to make sure that all
+        player_list.append(skill_by_game)
+
+        skill_by_game.insert(0, playerID)
+
+        # format header so it reads player ID, Game 1, Game 2, ...
+        header = [f'Game {i}' for i in range(1, max_games + 1)]
+        header.insert(0, 'playerID')
+
+    skill_by_game_ss.clear()
+    skill_by_game_ss.update_values('A1', [header])
+    skill_by_game_ss.update_values('A2', player_list)
+
 
 def update_champions_list(champions_ss: pyg.Worksheet, rankings_ss, first_rankings_cell, last_rankings_cell):
     """
@@ -278,3 +298,4 @@ def update_game_list(game_list_sheet, history):
         formatted.append([game.timestamp, game.get_team_name(1), game.get_team_name(2), game.team_one_score,
                           game.team_two_score, round(game.t1_win_prob / 100, 4)])
     game_list_sheet.update_values('A1', formatted)
+
