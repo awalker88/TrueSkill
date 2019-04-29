@@ -6,7 +6,7 @@ I was looking for a side project to occupy my downtime, and figured why not comb
 
 ## How it works
 
-**1. ```History.py```, ```Player.py```, ```Game.py```, ```TournamentTeam.py```** - This classes are used to store information and make it easy to access. I use a History class as an interface for looking at the player and game databases (```roster.pkl``` and ```game_database.pkl```, respectively), adding players and games, and running tournaments.
+**1. ```History.py```, ```Player.py```, ```Game.py```, ```TournamentTeam.py```** - These classes are used to store information and make it easy to access and modify. I use a History class as an interface for looking at the player and game databases (```roster.pkl``` and ```game_database.pkl```, respectively), adding players and games, and running tournaments.
 
 Upon initialization, a new History class reads in ```roster.pkl``` and ```game_database.pkl```. ```roster.pkl``` is a dictionary of Player objects, with that player's playerID as a key. ```game_database.pkl``` is the same, except it is a dictionary of Game objects with the gameID as it's key.
 
