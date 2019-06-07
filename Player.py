@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from trueskill import Rating
 
 
@@ -57,7 +59,9 @@ class Player:
         date = timestamp[0]
         date = date.split('/')
         if len(date[0]) == 1:
-            date[0] = '0' + date[0]  # checks that month is always two digits
+            date[0] = '0' + date[0]  # enforces that month is always two digits
+        if len(date[1]) == 1:
+            date[1] = '0' + date[1]  # enforces that day is always two digits
         self.skill_by_day[f'{date[2]}-{date[0]}-{date[1]}'] = self.ranking_score
 
     def update_stats_after_game(self, players_score: int, opponents_score: int):
@@ -106,3 +110,25 @@ class Player:
         self.points_lost = 0
         self.average_ppg = 0
         self.average_point_margin = 0
+
+    def get_skill_on_day(self, skill_date: str):
+        """
+        returns a player's skill on a certain date
+        :param skill_date: must be a string in the form 'YYYY-MM-DD'
+        :return: float that's player's skill
+        """
+        if self.games_played == 0:
+            return 0.00
+
+        if skill_date in self.skill_by_day:
+            return self.skill_by_day[skill_date]
+
+        last_skill_date = skill_date
+        while last_skill_date not in self.skill_by_day:
+            if last_skill_date == '2018-01-01':
+                return 0.00
+            split = last_skill_date.split('-')
+            # convert to date object so we can minus one day
+            last_skill_date = date(int(split[0]), int(split[1]), int(split[2])) - timedelta(1)
+            last_skill_date = last_skill_date.strftime('%Y-%m-%d')
+        return self.skill_by_day[last_skill_date]
