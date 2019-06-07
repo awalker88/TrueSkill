@@ -200,51 +200,39 @@ def update_skill_by_game(skill_by_game_ss: pyg.Worksheet, history):
     skill_by_game_ss.update_values('A2', player_list)
 
 
-def update_champions_list(champions_ss: pyg.Worksheet, rankings_ss, first_rankings_cell, last_rankings_cell):
-    """
-    if date when run is 7 or more days since latest entry in Previous Champions sheet, adds champion based on current
-    champion
-    :param champions_ss: sheet with previous champions
-    :param rankings_ss: sheet with current rankings
-    :param first_rankings_cell: cells to pull champion info from
-    :param last_rankings_cell: cells to pull champion info from
-    :return: None
-    """
-    # TODO: change so that it's Week n | week start day | week end day | champion | rating score
-    # TODO: redo so it updates all the champions based on skill history
-    # update champion list
-    current = pd.DataFrame(champions_ss.get_all_values())
-    current = current[1:]  # gets rid of header row from sheet
-    current.columns = ['week', 'champion', 'playerID', 'rating']
-    current = current[current.week != '']  # remove blank rows
-    latest_week = current['week'][len(current)]
-    split = latest_week.split("/")
-    latest_week = date(int(split[2]), int(split[0]), int(split[1]))  # note: have to modify after the year 2099 :)
-    # check we need to crown a champion
-    if (date.today() - latest_week).days >= 7:
-        no_players = False
-        top_player_is_zero = False
-        # checks if a champion even can be crowned
-        if rankings_ss.get_value(first_rankings_cell) == '':
-            no_players = True
-            print('No players in Rankings sheet. No champion.')
+def update_champions_list(champions_ss, start_date: str, history):
+    # make sure that start date is a monday
+    split_date = start_date.split('-')
+    start_date = date(int(split_date[0]), int(split_date[1]), int(split_date[2]))
+    if date.isoweekday(start_date) != 1:
+        print('start_date_str is not a monday. will be converted to previous monday.')
+        start_date = start_date - timedelta(date.isoweekday(start_date) - 1)
 
-        if float(rankings_ss.get_value(last_rankings_cell)) == 0.:
-            print('Top player has not played any games. No champion.')
-            top_player_is_zero = True
+    # get list of dates that need champions
+    today = date.today()
+    new_champion_dates = []  # list of dates as strings where a champion should have been declared
 
-        # if it's been a week since we last crowned a champion, crown a new one
-        last_monday = str(date.today() - timedelta(days=date.today().weekday()))
-        if no_players or top_player_is_zero:
-            new_champion = [[last_monday, 'No champion', 'No champion', 'NA']]
-        else:
-            new_champion = rankings_ss.get_values(first_rankings_cell, last_rankings_cell[0] + first_rankings_cell[1:])
-        new_champion[0][0] = f"{last_monday[5:7]}/{last_monday[8:10]}/{last_monday[2:4]}"
-        combined = pd.concat([current, pd.DataFrame(new_champion, columns=['week', 'champion', 'playerID', 'rating'])])
-        champions_ss.update_values('A2', combined.values.tolist())
-        print(f"New Champion added: {new_champion}")
-    else:
-        print("Not time for a new champion yet.")
+    new_champion_date = start_date
+    while today - new_champion_date >= timedelta(0):
+        new_champion_dates.append(new_champion_date.strftime('%Y-%m-%d'))
+        new_champion_date += timedelta(7)
+
+    # find champion on each date
+    champions_list = [['Week', 'Player Name', 'Player ID', 'Ranking Score']]
+    for monday in new_champion_dates:
+        potential_champion = ['', '']  # store highest skilled person we've seen so far
+        highest_skill = 0
+        for playerID in history.roster:
+            player = history.roster[playerID]
+            skill_on_monday = player.get_skill_on_day(monday)
+            if skill_on_monday > highest_skill:
+                potential_champion = [player.name, player.playerID]
+                highest_skill = skill_on_monday
+        champions_list.append([monday, potential_champion[0], potential_champion[1], highest_skill])
+
+    # update champions tab
+    champions_ss.clear('A1', 'D100')
+    champions_ss.update_values('A1', champions_list)
 
 
 def update_player_list(player_list_ss: pyg.Worksheet, history):

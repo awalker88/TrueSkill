@@ -5,14 +5,12 @@ import pygsheets as pyg
 import sheets_interface
 from History import History
 
-# TODO: ensure that handles case of two champions being added between refreshes is handled properly
-# TODO: have start date for skill history be moved to 3/20
-# TODO: add ability to remove a player
+# TODO: fix adding game, player notification
 
 # configuration
 spreadsheet_name = 'IBM Rochester Ping Pong'
 frc = 'C3'  # change if rankings table is moved
-update_time_cell = 'H15'  # cell that contains time of the last refresh
+update_time_cell = 'I15'  # cell that contains time of the last refresh
 
 # connect to worksheets
 gc = pyg.authorize()
@@ -51,7 +49,7 @@ sheets_interface.update_skill_by_day(skill_by_day_ss, date(2019, 3, 19), h)
 sheets_interface.update_skill_by_game(skill_by_game_ss, h)
 
 # update Champions page
-sheets_interface.update_champions_list(champion_ss, rankings_ss, frc, lrc)
+sheets_interface.update_champions_list(champion_ss, start_date='2019-03-25', history=h)
 
 # update Player List page
 sheets_interface.update_player_list(player_list_ss, h)
