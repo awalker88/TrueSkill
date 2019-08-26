@@ -92,6 +92,11 @@ class Player:
             self.draws += 1
 
     def reset_stats(self, new_skill: Rating):
+        """
+        Resets all of a players stats to what they would be if they were just added as a new player
+        :param new_skill: Rating object, usually created in a History class by calling 'self.env.create_rating()'
+        :return: None
+        """
         self.wins = 0
         self.losses = 0
         self.draws = 0
