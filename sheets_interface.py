@@ -28,8 +28,27 @@ def add_new_game_responses(game_responses_ss: pyg.Worksheet, history, ask_to_add
     current = current[current.timestamp != 'Timestamp']  # gets rid of sheet header row
 
     # we want just new submissions, so (in set notation), this does: current - previous
-    new_submissions = pd.concat([current, previous, previous], sort=False).drop_duplicates(keep=False).values.tolist()
+    new_submissions_df = pd.concat([current, previous, previous], sort=False).drop_duplicates(keep=False)
+    new_submissions = new_submissions_df.values.tolist()
 
+    # delete all games and re-add all the ones in current that aren't new, as the google sheets game list should be
+    # the master list. a game may be in current but not in previous if it was an error and I deleted on the google sheet
+    history.clear_game_database(verbose=False)
+    print("Re-adding old games")
+    current_submissions = pd.concat([current, new_submissions_df, new_submissions_df], sort=False).drop_duplicates(keep=False).values.tolist()
+    for index, submission in enumerate(current_submissions):
+        current_submissions[index] = [submission[1].replace(' ', '').split(','),  # team one
+                                      submission[2].replace(' ', '').split(','),  # team two
+                                      int(submission[3]),  # team one score
+                                      int(submission[4]),  # team two score
+                                      submission[0],  # timestamp
+                                      submission[5]]  # notes
+    for submission in current_submissions:
+        history.add_game(team_one=submission[0], team_two=submission[1], team_one_score=submission[2],
+                         team_two_score=submission[3], timestamp=submission[4], notes=submission[5])
+    history.save_game_database()
+
+    # now that all the old games are re-added and up to date, add new submissions if there are any
     if len(new_submissions) == 0:
         print("No new game submissions.")
     else:
@@ -88,14 +107,27 @@ def add_new_players(player_responses_ss: pyg.Worksheet, history, ask_to_add=True
     current = current[current.timestamp != 'Timestamp']  # gets rid of sheet header row
 
     # in set notation, this does: current - previous
-    new_submissions = pd.concat([current, previous, previous], sort=False).drop_duplicates(keep=False)
+    new_submissions_df = pd.concat([current, previous, previous], sort=False).drop_duplicates(keep=False)
+    new_submissions = new_submissions_df.values.tolist()
+
+    # delete all players and re-add all the ones in current that aren't new, as the google sheets player list should be
+    # the master list. a player may be in current but not in previous if it was an error and I deleted that player
+    # on the google sheet
+    history.clear_roster(verbose=False)
+    print("Re-adding old players")
+    current_submissions = pd.concat([current, new_submissions_df, new_submissions_df], sort=False).drop_duplicates(keep=False).values.tolist()
+    for submission in current_submissions:
+        history.add_player(submission[1])
+    history.save_roster()
+
+    # now that all the old players are re-added and up to date, add new submissions if there are any
     if len(new_submissions) == 0:
         print("No new players")
     else:
         if ask_to_add:
             print("Current roster:")
             history.print_roster()
-        for submission in new_submissions.values:
+        for submission in new_submissions:
             # see if anyone else in the roster has that exact name
             for playerID in history.roster:
                 if history.roster[playerID].name == submission[1]:
@@ -107,6 +139,7 @@ def add_new_players(player_responses_ss: pyg.Worksheet, history, ask_to_add=True
             else:
                 history.add_player(submission[1])
 
+    # TODO: add reset players part (and explanation why!)
     combined = pd.concat([current, previous], ignore_index=True, sort=False)
     combined = combined.drop_duplicates()
     pkl.dump(combined, open('previous_playerID_responses.pkl', 'wb'))
@@ -137,6 +170,7 @@ def update_rankings(rankings_ss: pyg.Worksheet, history, first_rankings_cell, la
     rankings_ss.get_values(first_rankings_cell, last_rankings_cell[0] + '1000', returnas='range') \
         .apply_format(model_cell)  # format range to be blank
     rankings_ss.update_values(first_rankings_cell, ranking_list)  # TODO: Fix when there are no players and rl is empty
+    print('rankings_ss updated')
 
 
 def update_skill_by_day(skill_by_day_ss: pyg.Worksheet, start_date, history):
@@ -175,6 +209,8 @@ def update_skill_by_day(skill_by_day_ss: pyg.Worksheet, start_date, history):
     skill_by_day_ss.clear()
     skill_by_day_ss.update_values('A1', [date_df.columns.values.tolist()])
     skill_by_day_ss.update_values('A2', date_df.values.tolist())
+    print('skill_by_day updated')
+
 
 
 def update_skill_by_game(skill_by_game_ss: pyg.Worksheet, history):
@@ -198,6 +234,7 @@ def update_skill_by_game(skill_by_game_ss: pyg.Worksheet, history):
     skill_by_game_ss.clear()
     skill_by_game_ss.update_values('A1', [header])
     skill_by_game_ss.update_values('A2', player_list)
+    print('skill_by_game updated')
 
 
 def update_champions_list(champions_ss, start_date: str, history):
@@ -233,11 +270,11 @@ def update_champions_list(champions_ss, start_date: str, history):
     # update champions tab
     champions_ss.clear('A1', 'D100')
     champions_ss.update_values('A1', champions_list)
+    print('champions_list updated')
 
 
 def update_player_list(player_list_ss: pyg.Worksheet, history):
     """
-
     :param player_list_ss: google sheet you want to update
     :param history: History class with roster of players
     :return: None
@@ -267,6 +304,7 @@ def update_player_list(player_list_ss: pyg.Worksheet, history):
                             history.roster[playerID].longest_losing_streak])
     player_list_ss.clear('A1', 'P101')
     player_list_ss.update_values('A1', roster_list)
+    print('player_list updated')
 
 
 def update_game_list(game_list_sheet, history):
@@ -286,4 +324,5 @@ def update_game_list(game_list_sheet, history):
         formatted.append([game.timestamp, game.get_team_name(1), game.get_team_name(2), game.team_one_score,
                           game.team_two_score, round(game.t1_win_prob / 100, 4)])
     game_list_sheet.update_values('A1', formatted)
+    print('game_list updated')
 

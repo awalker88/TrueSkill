@@ -1,8 +1,8 @@
 import pickle as pkl
+from math import ceil, log2
 from random import shuffle
 
 import trueskill as ts
-from math import ceil, log2
 from pandas import DataFrame
 from prettytable import PrettyTable
 
@@ -158,7 +158,7 @@ class History:
                            f"{g.team_one_score}-{g.team_two_score}", pred_winner, actual_winner])
         print(table)
 
-    def clear_roster(self):
+    def clear_roster(self, verbose=True):
         """
         Overwrites roster pickle file and then sets History's roster equal to empty roster pickle file
         :return: None
@@ -169,9 +169,10 @@ class History:
         pkl.dump(empty_df, open("previous_playerID_responses.pkl", "wb"))
         self.roster = pkl.load(open(self.roster_name, "rb"))
         self.num_players = len(self.roster)
-        print("Roster cleared.")
+        if verbose:
+            print("Roster cleared.")
 
-    def clear_game_database(self):
+    def clear_game_database(self, verbose=True):
         """
         Overwrites game_database pkl file and then sets History's roster equal to empty roster pkl file
         :return: None
@@ -180,7 +181,8 @@ class History:
         self.game_database = {}
         self.save_game_database()
         self.num_games = len(self.game_database)
-        print("Game Database cleared.")
+        if verbose:
+            print("Game Database cleared.")
 
         # reset player stats
         for playerID in self.roster:
@@ -189,7 +191,8 @@ class History:
 
         # clear previous responses
         pkl.dump(DataFrame([[]]), open("previous_game_responses.pkl", "wb"))
-        print("previous_game_responses.pkl cleared.")
+        if verbose:
+            print("previous_game_responses.pkl cleared.")
 
     def save_roster(self):
         """

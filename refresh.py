@@ -26,18 +26,14 @@ skill_by_game_ss: pyg.Worksheet = workbook.worksheet_by_title('Skill By Game')
 game_list_ss: pyg.Worksheet = workbook.worksheet_by_title('Game List')
 
 h = History()
-h.clear_roster()
-h.clear_game_database()
-sheets_interface.add_new_players(playerID_responses_ss, h, ask_to_add=False)
-sheets_interface.add_new_game_responses(game_responses_ss, h, ask_to_add=False)
 
 lrc = 'F' + str((2 + len(h.roster)))
 
 # add new players
-sheets_interface.add_new_players(playerID_responses_ss, h)
+sheets_interface.add_new_players(playerID_responses_ss, h, ask_to_add=True)
 
 # add new games
-new_games = sheets_interface.add_new_game_responses(game_responses_ss, h)
+new_games = sheets_interface.add_new_game_responses(game_responses_ss, h, ask_to_add=True)
 
 # update Rankings page
 sheets_interface.update_rankings(rankings_ss, h, frc, lrc)
