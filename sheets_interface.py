@@ -212,7 +212,6 @@ def update_skill_by_day(skill_by_day_ss: pyg.Worksheet, start_date, history):
     print('skill_by_day updated')
 
 
-
 def update_skill_by_game(skill_by_game_ss: pyg.Worksheet, history):
     player_list = []
     max_games = 0

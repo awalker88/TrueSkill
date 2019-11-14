@@ -1,3 +1,4 @@
+import os
 import pickle as pkl
 from math import ceil, log2
 from random import shuffle
@@ -13,10 +14,20 @@ from TournamentTeam import TournamentTeam
 
 class History:
     def __init__(self, roster_name="roster.pkl", game_database_name="game_database.pkl"):
+        # load roster database
         self.roster_name = roster_name
+        if os.path.getsize(self.roster_name) > 0:
+            self.roster = pkl.load(open(self.roster_name, "rb"))
+        else:
+            self.clear_roster()
+
+        # load game database
         self.game_database_name = game_database_name
-        self.roster = pkl.load(open(self.roster_name, "rb"))
-        self.game_database = pkl.load(open(self.game_database_name, "rb"))
+        if os.path.getsize(self.game_database_name) > 0:
+            self.game_database = pkl.load(open(self.game_database_name, "rb"))
+        else:
+            self.clear_game_database()
+
         self.num_players = len(self.roster)
         self.num_games = len(self.game_database)
         self.current_season = 1  # TODO: Add support for soft reset of ranks with seasons
