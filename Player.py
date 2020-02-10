@@ -47,6 +47,7 @@ class Player:
     def update_skill(self, new_skill: Rating, timestamp: str):
         """
         Refreshes player skill rating and adds old skill rating to this player's skill_by_day
+        :param timestamp:
         :param new_skill: new Rating object
         :return: None
         """
@@ -56,13 +57,13 @@ class Player:
         self.ranking_score = round(self.skill.mu - (3 * self.skill.sigma), 2)
         self.skill_by_game.append(self.ranking_score)
         timestamp = timestamp.split(' ')
-        date = timestamp[0]
-        date = date.split('/')
-        if len(date[0]) == 1:
-            date[0] = '0' + date[0]  # enforces that month is always two digits
-        if len(date[1]) == 1:
-            date[1] = '0' + date[1]  # enforces that day is always two digits
-        self.skill_by_day[f'{date[2]}-{date[0]}-{date[1]}'] = self.ranking_score
+        skill_date = timestamp[0]
+        skill_date = skill_date.split('/')
+        if len(skill_date[0]) == 1:
+            skill_date[0] = '0' + skill_date[0]  # enforces that month is always two digits
+        if len(skill_date[1]) == 1:
+            skill_date[1] = '0' + skill_date[1]  # enforces that day is always two digits
+        self.skill_by_day[f'{skill_date[2]}-{skill_date[0]}-{skill_date[1]}'] = self.ranking_score
 
     def update_stats_after_game(self, players_score: int, opponents_score: int):
         """

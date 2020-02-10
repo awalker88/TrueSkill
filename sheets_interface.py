@@ -9,6 +9,7 @@ from prettytable import PrettyTable
 
 def add_new_game_responses(game_responses_ss: pyg.Worksheet, history, ask_to_add=True):
     """ Pulls all responses from sheet, figures out which ones are new, and returns them formatted for adding to History
+    :param ask_to_add: whether it should ask each time if it should add a new game
     :param game_responses_ss: worksheet to pull responses from
     :param history: History class containing your roster
     :returns: list of new responses that are easily read by add_game(): [[team_one], [team_two], team_one_score,
@@ -34,7 +35,7 @@ def add_new_game_responses(game_responses_ss: pyg.Worksheet, history, ask_to_add
     # delete all games and re-add all the ones in current that aren't new, as the google sheets game list should be
     # the master list. a game may be in current but not in previous if it was an error and I deleted on the google sheet
     history.clear_game_database(verbose=False)
-    print("Re-adding old games")
+    print("Re-running for old games")
     current_submissions = pd.concat([current, new_submissions_df, new_submissions_df], sort=False).drop_duplicates(keep=False).values.tolist()
     for index, submission in enumerate(current_submissions):
         current_submissions[index] = [submission[1].replace(' ', '').split(','),  # team one
@@ -90,7 +91,8 @@ def add_new_game_responses(game_responses_ss: pyg.Worksheet, history, ask_to_add
 def add_new_players(player_responses_ss: pyg.Worksheet, history, ask_to_add=True):
     """
     Retrieves and checks new playerID requests
-    :param player_responses_ss:
+    :param ask_to_add: whether to ask to add new players
+    :param player_responses_ss: spreadsheet containing all player request responses
     :param history: History class that we pull the roster from
     :return: list of new [timestamp, name]s
     """
@@ -114,7 +116,7 @@ def add_new_players(player_responses_ss: pyg.Worksheet, history, ask_to_add=True
     # the master list. a player may be in current but not in previous if it was an error and I deleted that player
     # on the google sheet
     history.clear_roster(verbose=False)
-    print("Re-adding old players")
+    print("Re-running for old players")
     current_submissions = pd.concat([current, new_submissions_df, new_submissions_df], sort=False).drop_duplicates(keep=False).values.tolist()
     for submission in current_submissions:
         history.add_player(submission[1])
@@ -139,7 +141,6 @@ def add_new_players(player_responses_ss: pyg.Worksheet, history, ask_to_add=True
             else:
                 history.add_player(submission[1])
 
-    # TODO: add reset players part (and explanation why!)
     combined = pd.concat([current, previous], ignore_index=True, sort=False)
     combined = combined.drop_duplicates()
     pkl.dump(combined, open('previous_playerID_responses.pkl', 'wb'))
@@ -324,4 +325,3 @@ def update_game_list(game_list_sheet, history):
                           game.team_two_score, round(game.t1_win_prob / 100, 4)])
     game_list_sheet.update_values('A1', formatted)
     print('game_list updated')
-

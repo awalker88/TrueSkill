@@ -5,8 +5,6 @@ import pygsheets as pyg
 import sheets_interface
 from History import History
 
-# TODO: fix adding game, player notification
-
 # configuration
 spreadsheet_name = 'IBM Rochester Ping Pong'
 frc = 'C3'  # change if rankings table is moved
@@ -33,7 +31,7 @@ lrc = 'F' + str((2 + len(h.roster)))
 sheets_interface.add_new_players(playerID_responses_ss, h, ask_to_add=True)
 
 # add new games
-new_games = sheets_interface.add_new_game_responses(game_responses_ss, h, ask_to_add=False)
+new_games = sheets_interface.add_new_game_responses(game_responses_ss, h, ask_to_add=True)
 
 # update Rankings page
 sheets_interface.update_rankings(rankings_ss, h, frc, lrc)
